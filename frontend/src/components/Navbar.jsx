@@ -107,7 +107,7 @@ const Navbar = () => {
         <p>Free Shipping on Orders Over ₹999 | Easy Returns & Exchange</p>
       </div>
 
-      <div className="bg-white shadow-md sticky top-0 z-[100] w-full font-sans">
+      <div className="bg-white shadow-md relative lg:sticky lg:top-0 z-[100] w-full font-sans">
         {/* ================= DESKTOP (Top Row) ================= */}
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex justify-between items-center h-[80px] lg:gap-8">

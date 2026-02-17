@@ -8,6 +8,8 @@ import Shop from './pages/Shop'
 import ProductDetails from './pages/ProductDetails'
 import Cart from './pages/Cart'
 import Wishlist from './pages/Wishlist'
+import Categories from './pages/Categories'
+import Wholesale from './pages/Wholesale'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 // Layouts
@@ -54,6 +56,8 @@ export default function App() {
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/wholesale" element={<Wholesale />} />
         <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
         <Route path="/offers" element={<Navigate to="/dashboard" replace />} />
       </Route>

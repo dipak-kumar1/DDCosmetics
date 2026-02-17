@@ -248,41 +248,41 @@ export default function Shop() {
       <CategorySection categories={categories} />
 
       {/* Filter Bar (Mobile Only) */}
-      <div className="lg:hidden sticky top-0 z-[60] bg-white shadow-sm mb-2 border-t border-b border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 min-h-[80px] flex items-center transition-all duration-300">
+      <div className="lg:hidden sticky top-[76px] z-[30] bg-white shadow-sm mb-2 border-t border-b border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 transition-all duration-300">
         <div className="flex divide-x divide-gray-100 overflow-x-auto no-scrollbar max-w-7xl mx-auto w-full">
           <button 
             onClick={() => setActiveModal('sort')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-3 min-w-[90px] hover:bg-gray-50 transition-colors ${sortOption !== 'relevance' ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 min-w-[90px] hover:bg-gray-50 transition-colors ${sortOption !== 'relevance' ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
           >
             <ArrowUpDown className="w-4 h-4" />
-            <span className="text-sm">Sort</span>
+            <span className="text-xs sm:text-sm">Sort</span>
             {sortOption !== 'relevance' && <div className="w-1.5 h-1.5 bg-[#fc2779] rounded-full" />}
           </button>
           
           <button 
             onClick={() => setActiveModal('category')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-3 min-w-[110px] hover:bg-gray-50 transition-colors ${searchParams.get('category') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 min-w-[110px] hover:bg-gray-50 transition-colors ${searchParams.get('category') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
           >
-            <span className="text-sm">Category</span>
+            <span className="text-xs sm:text-sm">Category</span>
             <ChevronDown className="w-4 h-4" />
             {searchParams.get('category') && <div className="w-1.5 h-1.5 bg-[#fc2779] rounded-full" />}
           </button>
           
           <button 
             onClick={() => setActiveModal('gender')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-3 min-w-[100px] hover:bg-gray-50 transition-colors ${searchParams.get('tag') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 min-w-[100px] hover:bg-gray-50 transition-colors ${searchParams.get('tag') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
           >
-            <span className="text-sm">Gender</span>
+            <span className="text-xs sm:text-sm">Gender</span>
             <ChevronDown className="w-4 h-4" />
             {searchParams.get('tag') && <div className="w-1.5 h-1.5 bg-[#fc2779] rounded-full" />}
           </button>
           
           <button 
             onClick={() => setActiveModal('filter')} 
-            className={`flex-1 flex items-center justify-center gap-2 py-3 min-w-[100px] hover:bg-gray-50 transition-colors ${searchParams.get('discount') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 min-w-[100px] hover:bg-gray-50 transition-colors ${searchParams.get('discount') ? 'text-[#fc2779] font-medium' : 'text-gray-700'}`}
           >
             <Filter className="w-4 h-4" />
-            <span className="text-sm">Filters</span>
+            <span className="text-xs sm:text-sm">Filters</span>
             {searchParams.get('discount') && <div className="w-1.5 h-1.5 bg-[#fc2779] rounded-full" />}
           </button>
         </div>

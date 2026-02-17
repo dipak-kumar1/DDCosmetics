@@ -1,12 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { LayoutDashboard, ShoppingBag, User, MapPin, LogOut, Edit2, Loader } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, logout } = useContext(AuthContext);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
