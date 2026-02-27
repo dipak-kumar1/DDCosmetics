@@ -9,29 +9,25 @@ export const CartProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
   const [cart, setCart] = useState([]);
 
-  // Load cart when user changes
+  // Load cart on mount or user change
   useEffect(() => {
-    if (user) {
-      try {
-        const localCart = localStorage.getItem(`cart_${user.id || user._id}`);
-        setCart(localCart ? JSON.parse(localCart) : []);
-      } catch {
-        setCart([]);
-      }
-    } else {
+    try {
+      const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
+      const localCart = localStorage.getItem(storageKey);
+      setCart(localCart ? JSON.parse(localCart) : []);
+    } catch {
       setCart([]);
     }
   }, [user]);
 
   // Save cart when it changes
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(`cart_${user.id || user._id}`, JSON.stringify(cart));
-    }
+    const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
+    localStorage.setItem(storageKey, JSON.stringify(cart));
   }, [cart, user]);
 
   const addToCart = (product, quantity = 1) => {
-    if (!user) return;
+    // if (!user) return; // Allow adding to cart even if not logged in (handled by local state)
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item._id === product._id);
       if (existingItem) {
@@ -46,21 +42,28 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (productId) => {
-    if (!user) return;
+    // if (!user) return;
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
   };
 
   const clearCart = () => {
     setCart([]);
+    const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
+    localStorage.removeItem(storageKey);
   };
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce((total, item) => {
+      const price = item.discountPrice || item.price;
+      return total + price * item.quantity;
+    }, 0);
   };
 
   const getCartCount = () => {
     return cart.reduce((count, item) => count + item.quantity, 0);
   };
+
+  const totalPrice = () => getCartTotal();
 
   return (
     <CartContext.Provider
@@ -70,6 +73,7 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         clearCart,
         getCartTotal,
+        totalPrice, // Keep it as a function
         getCartCount,
       }}
     >

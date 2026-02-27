@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
-import { Heart, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, ChevronRight, Share2, MapPin } from 'lucide-react'
+import { Heart, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, ChevronRight, Share2, MapPin, Package } from 'lucide-react'
 import api from '../services/api'
 
 export default function ProductDetails() {
@@ -101,11 +101,25 @@ export default function ProductDetails() {
     }
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#fc2779]"></div>
-    </div>
-  )
+  const handleBuyNow = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    // Add product to cart and immediately navigate to checkout
+    addToCart(product, quantity);
+    setTimeout(() => {
+      navigate('/checkout');
+    }, 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#fc2779]"></div>
+      </div>
+    )
+  }
   
   if (!product) return null
 
@@ -266,10 +280,29 @@ export default function ProductDetails() {
               <div className="flex gap-4 mb-8">
                 <button
                   onClick={() => handleAction('cart')}
-                  className="flex-1 bg-[#fc2779] text-white py-4 px-6 font-bold uppercase tracking-wide hover:bg-[#d61f66] transition-colors shadow-lg shadow-pink-100 rounded-sm"
+                  className="flex-1 bg-gray-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                 >
-                  Add to Bag
+                  <ShoppingBag className="w-5 h-5" />
+                  Add to Cart
                 </button>
+
+                <button
+                  onClick={handleBuyNow}
+                  className="flex-1 bg-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-pink-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-pink-200"
+                >
+                  Buy Now
+                </button>
+              </div>
+            
+              {/* Trust Badges below buttons */}
+              <div className="flex items-center justify-center gap-4 text-xs font-medium text-gray-500 bg-gray-50 py-3 rounded-lg border border-gray-100 mb-8">
+                <span className="flex items-center gap-1.5">
+                  <Package className="w-4 h-4 text-pink-500" /> Same Day Pickup Available
+                </span>
+                <span className="w-px h-4 bg-gray-300"></span>
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-pink-500" /> Free Delivery within 3km
+                </span>
               </div>
 
               {/* Delivery Section */}

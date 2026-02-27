@@ -129,7 +129,20 @@ router.post('/products', auth, adminAuth, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    const { name, price, category, description, stock } = req.body;
+    const { 
+      name, 
+      price, 
+      category, 
+      description, 
+      stock, 
+      isWholesale, 
+      moq, 
+      bulkPricing, 
+      sellerType, 
+      shopName, 
+      contactNumber, 
+      location 
+    } = req.body;
     
     // Determine images
     let imageUrls = [];
@@ -153,7 +166,14 @@ router.post('/products', auth, adminAuth, (req, res, next) => {
       category,
       description,
       stock,
-      images: imageUrls
+      images: imageUrls,
+      isWholesale: isWholesale === 'true' || isWholesale === true,
+      moq: moq || 1,
+      bulkPricing: bulkPricing ? JSON.parse(bulkPricing) : [],
+      sellerType: sellerType || 'own',
+      shopName: shopName || '',
+      contactNumber: contactNumber || '',
+      location: location || ''
     });
 
     await newProduct.save();
@@ -212,7 +232,20 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
-    const { name, price, category, description, stock } = req.body;
+    const { 
+      name, 
+      price, 
+      category, 
+      description, 
+      stock,
+      isWholesale, 
+      moq, 
+      bulkPricing, 
+      sellerType, 
+      shopName, 
+      contactNumber, 
+      location
+    } = req.body;
     
     // Find the existing product first
     let product = await Product.findById(req.params.id);
@@ -256,13 +289,6 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
       imageUrls = [...imageUrls, ...newImageUrls];
     }
     
-    // If absolutely no images (old or new), use placeholder?
-    // Only if it's empty
-    if (imageUrls.length === 0) {
-       // Maybe keep it empty or use placeholder
-       // imageUrls = ['https://via.placeholder.com/300?text=No+Image'];
-    }
-
     // Update fields
     product.name = name || product.name;
     product.price = price || product.price;
@@ -270,6 +296,15 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
     product.description = description || product.description;
     product.stock = stock || product.stock;
     product.images = imageUrls;
+    
+    // Wholesale fields update
+    if (isWholesale !== undefined) product.isWholesale = isWholesale === 'true' || isWholesale === true;
+    if (moq !== undefined) product.moq = moq;
+    if (bulkPricing !== undefined) product.bulkPricing = JSON.parse(bulkPricing);
+    if (sellerType !== undefined) product.sellerType = sellerType;
+    if (shopName !== undefined) product.shopName = shopName;
+    if (contactNumber !== undefined) product.contactNumber = contactNumber;
+    if (location !== undefined) product.location = location;
 
     await product.save();
     res.json(product);

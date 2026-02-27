@@ -22,6 +22,8 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/banners', require('./routes/banners'));
+app.use('/api/hero-config', require('./routes/heroConfig'));
+app.use('/api/orders', require('./routes/orders'));
 app.use('/api/admin', require('./routes/admin'));
 
 const PORT = process.env.PORT || 5000;

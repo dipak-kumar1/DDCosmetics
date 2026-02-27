@@ -2,8 +2,19 @@ const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  fullName: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  orderType: { type: String, enum: ['pickup', 'delivery'], required: true },
+  address: { type: String }, // Required if orderType is 'delivery'
+  city: { type: String },
+  zipCode: { type: String },
   totalAmount: { type: Number, required: true },
-  status: { type: String, enum: ['Pending', 'Shipped', 'Delivered'], default: 'Pending' },
+  status: { 
+    type: String, 
+    enum: ['Pending Confirmation', 'Confirmed', 'Ready for Pickup', 'Shipped', 'Delivered', 'Cancelled'], 
+    default: 'Pending Confirmation' 
+  },
+  cancelReason: { type: String }, // New field for cancellation reason
   items: [
     {
       product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },

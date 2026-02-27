@@ -114,6 +114,8 @@ export default function Shop() {
       });
     } else if (sortOption === 'new') {
       sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortOption === 'popular') {
+      sorted.sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0));
     }
     // For relevance, we keep the default order (usually createdAt desc from backend)
     
@@ -311,6 +313,7 @@ export default function Shop() {
               <div className="p-2">
                 {[
                   { id: 'relevance', label: 'Relevance' },
+                  { id: 'popular', label: 'Most Popular' },
                   { id: 'new', label: 'New Arrivals' },
                   { id: 'price_high', label: 'Price (High to Low)' },
                   { id: 'price_low', label: 'Price (Low to High)' },
@@ -449,6 +452,7 @@ export default function Shop() {
               <div className="space-y-3">
                 {[
                   { id: 'relevance', label: 'Relevance' },
+                  { id: 'popular', label: 'Most Popular' },
                   { id: 'new', label: 'New Arrivals' },
                   { id: 'price_high', label: 'Price (High to Low)' },
                   { id: 'price_low', label: 'Price (Low to High)' },

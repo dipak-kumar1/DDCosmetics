@@ -7,8 +7,16 @@ const Product = require('../models/Product');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { category, search, tag, discount } = req.query;
+    const { category, search, tag, discount, isWholesale } = req.query;
     let query = { isActive: true };
+
+    // Default to excluding wholesale products unless specifically requested
+    if (isWholesale === 'true') {
+      query.isWholesale = true;
+    } else {
+      // Include products where isWholesale is false OR missing (undefined/null)
+      query.isWholesale = { $ne: true };
+    }
 
     if (category) {
       // Case-insensitive search for category
@@ -42,6 +50,65 @@ router.get('/', async (req, res) => {
     }
 
     const products = await queryBuilder;
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET /api/products/trending
+// @desc    Get top 8 trending products (sorted by totalSold)
+// @access  Public
+router.get('/trending', async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true })
+      .sort({ totalSold: -1 })
+      .limit(8);
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET /api/products/bestsellers
+// @desc    Get best selling products (highest sales in last 30 days)
+// @access  Public
+router.get('/bestsellers', async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true })
+      .sort({ salesLast30Days: -1 }) // Assuming salesLast30Days is populated
+      .limit(8); // Grid layout: 4 desktop, 2 mobile -> 8 is a good number
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET /api/products/combos
+// @desc    Get festival combo products
+// @access  Public
+router.get('/combos', async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true, isCombo: true })
+      .limit(8);
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET /api/products/new-arrivals
+// @desc    Get latest products
+// @access  Public
+router.get('/new-arrivals', async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true })
+      .sort({ createdAt: -1 })
+      .limit(8);
     res.json(products);
   } catch (err) {
     console.error(err.message);

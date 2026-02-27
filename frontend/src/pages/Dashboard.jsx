@@ -25,6 +25,27 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await api.get('/orders/myorders');
+      setOrders(res.data);
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -72,6 +93,18 @@ export default function Dashboard() {
     { id: 'profile', label: 'My Profile', icon: User },
     { id: 'addresses', label: 'Manage Addresses', icon: MapPin },
   ];
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    
+    try {
+      await api.put(`/orders/${orderId}/cancel`);
+      fetchOrders(); // Refresh list
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      alert(err.response?.data?.msg || 'Failed to cancel order');
+    }
+  };
 
   if (loading) {
     return (
@@ -256,14 +289,86 @@ export default function Dashboard() {
             )}
 
             {activeTab === 'orders' && (
-              <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[400px] text-center">
-                <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mb-4">
-                   <ShoppingBag className="w-8 h-8 text-pink-500" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No Orders Yet</h3>
-                <p className="text-gray-500 max-w-sm">
-                  You haven't placed any orders yet. Start shopping to see your orders here!
-                </p>
+              <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">My Orders</h2>
+                {ordersLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader className="w-8 h-8 animate-spin text-pink-500" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+                    <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mb-4">
+                      <ShoppingBag className="w-8 h-8 text-pink-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">No Orders Yet</h3>
+                    <p className="text-gray-500 max-w-sm">
+                      You haven't placed any orders yet. Start shopping to see your orders here!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div key={order._id} className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:border-pink-200 transition-colors">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 border-b border-gray-100 pb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-mono text-sm font-bold text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
+                              <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Placed on {new Date(order.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-gray-900">₹{order.totalAmount?.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mb-2">{order.items.length} Items</p>
+                            
+                            {/* Actions based on status */}
+                            {['Pending Confirmation', 'Confirmed', 'Ready for Pickup'].includes(order.status) ? (
+                              <button 
+                                onClick={() => handleCancelOrder(order._id)}
+                                className="text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                Cancel Order
+                              </button>
+                            ) : (
+                              <a 
+                                href="https://wa.me/919876543210" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center justify-end gap-1"
+                              >
+                                Need Help? <span className="underline">Chat with us</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                {item.product?.images?.[0] && (
+                                  <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{item.product?.name}</p>
+                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

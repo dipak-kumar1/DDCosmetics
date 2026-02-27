@@ -12,10 +12,20 @@ const AdminAddProduct = () => {
     category: '',
     description: '',
     stock: '',
-    images: []
+    images: [],
+    isWholesale: false,
+    moq: 1,
+    bulkPricing: [],
+    sellerType: 'own',
+    shopName: '',
+    contactNumber: '',
+    location: ''
   });
   const [loading, setLoading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
+  
+  // Bulk Pricing State
+  const [bulkTier, setBulkTier] = useState({ minQty: '', price: '' });
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -30,7 +40,26 @@ const AdminAddProduct = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ 
+      ...formData, 
+      [name]: type === 'checkbox' ? checked : value 
+    });
+  };
+
+  const addBulkTier = () => {
+    if (bulkTier.minQty && bulkTier.price) {
+      setFormData({
+        ...formData,
+        bulkPricing: [...formData.bulkPricing, { ...bulkTier }]
+      });
+      setBulkTier({ minQty: '', price: '' });
+    }
+  };
+
+  const removeBulkTier = (index) => {
+    const updated = formData.bulkPricing.filter((_, i) => i !== index);
+    setFormData({ ...formData, bulkPricing: updated });
   };
 
   const handleFileChange = (e) => {
@@ -51,6 +80,17 @@ const AdminAddProduct = () => {
     data.append('category', formData.category);
     data.append('description', formData.description);
     data.append('stock', formData.stock);
+    
+    // Wholesale Fields
+    data.append('isWholesale', formData.isWholesale);
+    if (formData.isWholesale) {
+      data.append('moq', formData.moq);
+      data.append('sellerType', formData.sellerType);
+      data.append('shopName', formData.shopName);
+      data.append('contactNumber', formData.contactNumber);
+      data.append('location', formData.location);
+      data.append('bulkPricing', JSON.stringify(formData.bulkPricing));
+    }
     
     for (let i = 0; i < formData.images.length; i++) {
       data.append('images', formData.images[i]);
@@ -147,7 +187,7 @@ const AdminAddProduct = () => {
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Plus className="w-4 h-4 text-indigo-500" />
+                  <Package className="w-4 h-4 text-indigo-500" />
                   Stock Quantity
                 </label>
                 <input
@@ -160,6 +200,7 @@ const AdminAddProduct = () => {
                   required
                 />
               </div>
+
             </div>
 
             <div className="space-y-2">

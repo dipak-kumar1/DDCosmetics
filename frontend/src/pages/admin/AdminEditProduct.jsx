@@ -13,12 +13,22 @@ const AdminEditProduct = () => {
     category: '',
     description: '',
     stock: '',
+    isWholesale: false,
+    moq: 1,
+    bulkPricing: [],
+    sellerType: 'own',
+    shopName: '',
+    contactNumber: '',
+    location: ''
   });
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]); // Array of File objects
   const [newImagePreviews, setNewImagePreviews] = useState([]); // Array of preview URLs
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Bulk Pricing State
+  const [bulkTier, setBulkTier] = useState({ minQty: '', price: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +46,13 @@ const AdminEditProduct = () => {
           category: product.category,
           description: product.description,
           stock: product.stock,
+          isWholesale: product.isWholesale || false,
+          moq: product.moq || 1,
+          bulkPricing: product.bulkPricing || [],
+          sellerType: product.sellerType || 'own',
+          shopName: product.shopName || '',
+          contactNumber: product.contactNumber || '',
+          location: product.location || ''
         });
         setExistingImages(product.images || []);
       } catch (err) {
@@ -50,7 +67,23 @@ const AdminEditProduct = () => {
   }, [id, navigate]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+  };
+
+  const addBulkTier = () => {
+    if (bulkTier.minQty && bulkTier.price) {
+      setFormData({
+        ...formData,
+        bulkPricing: [...formData.bulkPricing, { ...bulkTier }]
+      });
+      setBulkTier({ minQty: '', price: '' });
+    }
+  };
+
+  const removeBulkTier = (index) => {
+    const updated = formData.bulkPricing.filter((_, i) => i !== index);
+    setFormData({ ...formData, bulkPricing: updated });
   };
 
   const handleFileChange = (e) => {
@@ -82,6 +115,17 @@ const AdminEditProduct = () => {
     data.append('category', formData.category);
     data.append('description', formData.description);
     data.append('stock', formData.stock);
+    
+    // Wholesale Fields
+    data.append('isWholesale', formData.isWholesale);
+    if (formData.isWholesale) {
+      data.append('moq', formData.moq);
+      data.append('sellerType', formData.sellerType);
+      data.append('shopName', formData.shopName);
+      data.append('contactNumber', formData.contactNumber);
+      data.append('location', formData.location);
+      data.append('bulkPricing', JSON.stringify(formData.bulkPricing));
+    }
     
     // Append existing images (as JSON string to be parsed on backend)
     data.append('existingImages', JSON.stringify(existingImages));
@@ -200,6 +244,140 @@ const AdminEditProduct = () => {
                   required
                 />
               </div>
+
+              {/* Wholesale Toggle */}
+              <div className="md:col-span-2 border-t border-gray-100 pt-6 mt-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      name="isWholesale"
+                      checked={formData.isWholesale}
+                      onChange={handleChange}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">Mark as Wholesale Product</span>
+                </label>
+              </div>
+
+              {/* Wholesale Fields */}
+              {formData.isWholesale && (
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Minimum Order Quantity (MOQ)</label>
+                    <input
+                      type="number"
+                      name="moq"
+                      value={formData.moq}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Seller Type</label>
+                    <select
+                      name="sellerType"
+                      value={formData.sellerType}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+                    >
+                      <option value="own">Own Inventory</option>
+                      <option value="partner">Partner Seller</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Shop Name</label>
+                    <input
+                      type="text"
+                      name="shopName"
+                      value={formData.shopName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700">Contact Number</label>
+                    <input
+                      type="text"
+                      name="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-semibold text-gray-700">Location</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+                    />
+                  </div>
+
+                  {/* Bulk Pricing Tiers */}
+                  <div className="md:col-span-2 space-y-4">
+                    <label className="text-sm font-bold text-gray-800">Bulk Pricing Tiers</label>
+                    <div className="flex gap-4 items-end">
+                      <div className="flex-1 space-y-1">
+                        <span className="text-xs text-gray-500">Min Qty</span>
+                        <input
+                          type="number"
+                          value={bulkTier.minQty}
+                          onChange={(e) => setBulkTier({ ...bulkTier, minQty: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                          placeholder="e.g. 10"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <span className="text-xs text-gray-500">Price per Unit (₹)</span>
+                        <input
+                          type="number"
+                          value={bulkTier.price}
+                          onChange={(e) => setBulkTier({ ...bulkTier, price: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                          placeholder="e.g. 90"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addBulkTier}
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" /> Add Tier
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {formData.bulkPricing.map((tier, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-indigo-100">
+                          <div className="flex gap-6 text-sm">
+                            <span className="font-medium text-gray-700">Min Qty: {tier.minQty}</span>
+                            <span className="font-medium text-gray-700">Price: ₹{tier.price}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeBulkTier(index)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-1"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {formData.bulkPricing.length === 0 && (
+                        <p className="text-sm text-gray-500 italic">No bulk pricing tiers added.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

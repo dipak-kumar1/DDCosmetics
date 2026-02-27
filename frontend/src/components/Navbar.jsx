@@ -172,8 +172,8 @@ const Navbar = () => {
                 )}
               </div>
 
-              <Link to="/offers" className="text-gray-700 hover:text-[#4f46e5] text-sm font-bold uppercase tracking-wide transition-colors duration-200">
-                Offers
+              <Link to="/wholesale" className="text-gray-700 hover:text-[#4f46e5] text-sm font-bold uppercase tracking-wide transition-colors duration-200">
+                Wholesale
               </Link>
             </div>
 
@@ -374,11 +374,11 @@ const Navbar = () => {
               </div>
 
               <Link 
-                to="/offers" 
+                to="/wholesale" 
                 className="px-6 py-3 text-gray-700 font-medium hover:bg-[#4f46e5]/5 hover:text-[#4f46e5] border-l-4 border-transparent hover:border-[#4f46e5] transition-all"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Offers
+                Wholesale
               </Link>
             </div>
           </div>

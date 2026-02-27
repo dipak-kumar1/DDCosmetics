@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Shop from './pages/Shop'
 import ProductDetails from './pages/ProductDetails'
 import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
 import Wishlist from './pages/Wishlist'
 import Categories from './pages/Categories'
 import Wholesale from './pages/Wholesale'
@@ -21,10 +22,12 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminAddProduct from './pages/admin/AdminAddProduct'
+import AdminAddWholesaleProduct from './pages/admin/AdminAddWholesaleProduct'
 import AdminEditProduct from './pages/admin/AdminEditProduct'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminBanners from './pages/admin/AdminBanners'
+import AdminHero from './pages/admin/AdminHero'
 import AdminChangePassword from './pages/admin/AdminChangePassword'
 import AdminRoute from './routes/AdminRoute'
 
@@ -56,10 +59,11 @@ export default function App() {
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/wholesale" element={<Wholesale />} />
         <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-        <Route path="/offers" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/offers" element={<Navigate to="/wholesale" replace />} />
       </Route>
 
       {/* Admin Routes */}
@@ -69,10 +73,12 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="add-product" element={<AdminAddProduct />} />
+          <Route path="add-wholesale-product" element={<AdminAddWholesaleProduct />} />
           <Route path="edit-product/:id" element={<AdminEditProduct />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="banners" element={<AdminBanners />} />
+          <Route path="hero" element={<AdminHero />} />
           <Route path="change-password" element={<AdminChangePassword />} />
         </Route>
       </Route>

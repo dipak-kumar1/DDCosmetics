@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate } from 'lucide-react';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -23,7 +23,9 @@ const AdminLayout = () => {
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Products', path: '/admin/products', icon: Package },
     { name: 'Add Product', path: '/admin/add-product', icon: PlusCircle },
+    { name: 'Add Wholesale', path: '/admin/add-wholesale-product', icon: Store },
     { name: 'Categories', path: '/admin/categories', icon: Layers },
+    { name: 'Hero Section', path: '/admin/hero', icon: LayoutTemplate },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
     { name: 'Banners', path: '/admin/banners', icon: ImageIcon },
     { name: 'Change Password', path: '/admin/change-password', icon: Key },
