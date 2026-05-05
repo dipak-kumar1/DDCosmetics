@@ -14,6 +14,15 @@ const OrderSchema = new mongoose.Schema({
     enum: ['Pending Confirmation', 'Confirmed', 'Ready for Pickup', 'Shipped', 'Delivered', 'Cancelled'], 
     default: 'Pending Confirmation' 
   },
+  paymentMethod: { type: String, default: 'razorpay' },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Paid', 'Failed', 'Refunded'],
+    default: 'Pending'
+  },
+  razorpayOrderId: { type: String },
+  razorpayPaymentId: { type: String },
+  paidAt: { type: Date },
   cancelReason: { type: String }, // New field for cancellation reason
   items: [
     {
