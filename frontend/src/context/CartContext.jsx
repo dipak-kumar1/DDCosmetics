@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
+import { trackAction } from '../utils/tracking';
 
 const CartContext = createContext();
 
@@ -35,7 +36,7 @@ export const CartProvider = ({ children }) => {
   }, [cart, user]);
 
   const addToCart = (product, quantity = 1) => {
-    // if (!user) return; // Allow adding to cart even if not logged in (handled by local state)
+    trackAction('cart', product);
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item._id === product._id);
       if (existingItem) {

@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const adminAuth = require('../middleware/adminAuth');
-const Order = require('../models/Order');
 const Product = require('../models/Product');
+const UserActivity = require('../models/UserActivity');
+const Order = require('../models/Order');
 
 // @route   POST /api/orders
 // @desc    Create a new order (Checkout)
@@ -58,6 +59,21 @@ router.post('/', auth, async (req, res) => {
     });
 
     const order = await newOrder.save();
+
+    // Track purchase activity for recommendations
+    try {
+      const activities = items.map(item => ({
+        user: req.user.id,
+        product: item.product,
+        action: 'purchase',
+        weight: 10,
+        timeSpent: 0
+      }));
+      await UserActivity.insertMany(activities);
+    } catch (activityErr) {
+      console.error('Failed to log purchase activity:', activityErr.message);
+    }
+
     res.json(order);
   } catch (err) {
     console.error(err.message);

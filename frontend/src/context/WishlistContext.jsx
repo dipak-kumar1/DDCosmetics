@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
+import { trackAction } from '../utils/tracking';
 
 export const WishlistContext = createContext();
 
@@ -34,6 +35,7 @@ export const WishlistProvider = ({ children }) => {
 
   const addToWishlist = (product) => {
     if (!user) return; // Should be handled by UI redirect, but safeguard here
+    trackAction('wishlist', product);
     setWishlist((prev) => {
       if (prev.find((item) => item._id === product._id)) {
         return prev;
