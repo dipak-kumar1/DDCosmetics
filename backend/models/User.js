@@ -8,12 +8,16 @@ const UserSchema = new mongoose.Schema({
   mobile: { type: String },
   gender: { type: String, enum: ['Male', 'Female', 'Other'] },
   addresses: [{
-    type: { type: String, default: 'Home' }, // Home, Work, etc.
-    street: String,
+    name: String,
+    phone: String,
+    pincode: String,
+    locality: String,
+    address: String,
     city: String,
     state: String,
-    zipCode: String,
-    country: String,
+    landmark: String,
+    alternatePhone: String,
+    type: { type: String, default: 'Home' }, // Home, Work, etc.
     isDefault: { type: Boolean, default: false }
   }]
 }, { timestamps: true });

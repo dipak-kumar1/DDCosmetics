@@ -7,7 +7,13 @@ export const useWishlist = () => useContext(WishlistContext);
 
 export const WishlistProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
-  const [wishlist, setWishlist] = useState([]);
+  const [wishlist, setWishlist] = useState(() => {
+    if (user) {
+      const savedWishlist = localStorage.getItem(`wishlist_${user.id || user._id}`);
+      return savedWishlist ? JSON.parse(savedWishlist) : [];
+    }
+    return [];
+  });
 
   // Load wishlist when user changes
   useEffect(() => {

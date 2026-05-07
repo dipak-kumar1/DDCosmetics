@@ -161,4 +161,64 @@ router.get('/myorders', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/orders/check-delivery
+// @desc    Check if delivery is available for a pincode
+// @access  Public
+router.post('/check-delivery', async (req, res) => {
+  try {
+    const { pincode } = req.body;
+    if (!pincode) return res.status(400).json({ msg: 'Pincode is required' });
+    
+    // Simple validation for 6-digit Indian pincode
+    const isValidPincode = /^[1-9][0-9]{5}$/.test(pincode);
+    
+    // For demo purposes, let's say all valid pincodes are deliverable except those starting with '9'
+    if (isValidPincode && !pincode.startsWith('9')) {
+      res.json({ deliverable: true, message: 'Delivery Available' });
+    } else {
+      res.json({ deliverable: false, message: 'Not Deliverable to this pincode' });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   PUT /api/orders/:id/address
+// @desc    Update order delivery address
+// @access  Private
+router.put('/:id/address', auth, async (req, res) => {
+  try {
+    const { address, city, zipCode } = req.body;
+    let order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+
+    // Ensure user owns order
+    if (order.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    // Check if order can be updated
+    if (!['Pending Confirmation', 'Confirmed', 'Ready for Pickup'].includes(order.status)) {
+      return res.status(400).json({ msg: `Cannot change address. Order is already ${order.status}` });
+    }
+
+    if (address) order.address = address;
+    if (city) order.city = city;
+    if (zipCode) order.zipCode = zipCode;
+
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

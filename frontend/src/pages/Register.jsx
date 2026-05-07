@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
+import { AuthContext } from '../context/AuthContext'
 
 export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const { login } = useContext(AuthContext)
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -14,9 +16,7 @@ export default function Register() {
     setError('')
     try {
       const res = await api.post('/auth/register', { name, email, password })
-      // after register, store token and redirect
-      localStorage.setItem('dd_token', res.data.token)
-      localStorage.setItem('dd_user', JSON.stringify(res.data.user))
+      login(res.data.token, res.data.user)
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')

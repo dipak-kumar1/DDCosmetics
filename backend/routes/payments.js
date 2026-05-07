@@ -4,6 +4,8 @@ const Razorpay = require('razorpay');
 const auth = require('../middleware/authMiddleware');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
+const { sendOrderConfirmationEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -169,6 +171,18 @@ router.post('/verify-payment', auth, async (req, res) => {
       razorpayPaymentId: razorpay_payment_id,
       paidAt: new Date(),
     });
+
+    // Send Confirmation Email asynchronously
+    User.findById(req.user.id)
+      .then(user => {
+        if (user && user.email) {
+          Order.findById(order._id).populate('items.product', 'name images')
+            .then(populatedOrder => {
+              sendOrderConfirmationEmail(populatedOrder, user.email);
+            });
+        }
+      })
+      .catch(err => console.error('Failed to trigger email:', err));
 
     res.json({
       success: true,

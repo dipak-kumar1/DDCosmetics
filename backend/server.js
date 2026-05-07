@@ -9,6 +9,10 @@ const app = express();
 // Connect DB
 connectDB();
 
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET is not defined in .env file. Using default "secretkey" (INSECURE).');
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -26,6 +30,15 @@ app.use('/api/hero-config', require('./routes/heroConfig'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', require('./routes/admin'));
+
+// Health Check / Ping
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date() }));
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

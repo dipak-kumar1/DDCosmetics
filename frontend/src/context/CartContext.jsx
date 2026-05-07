@@ -7,9 +7,17 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    try {
+      const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
+      const localCart = localStorage.getItem(storageKey);
+      return localCart ? JSON.parse(localCart) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  // Load cart on mount or user change
+  // Load cart when user changes (e.g. login/logout)
   useEffect(() => {
     try {
       const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
