@@ -20,6 +20,7 @@ export default function Shop() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [loading, setLoading] = useState(true)
   const [hoveredProduct, setHoveredProduct] = useState(null)
+  const [categoryProducts, setCategoryProducts] = useState([])
   
   // Filter/Sort States
   const [activeModal, setActiveModal] = useState(null)
@@ -61,7 +62,8 @@ export default function Shop() {
 
         const results = await Promise.all(promises);
         
-        setProducts(results[0].data);
+        const matchedProducts = results[0].data;
+        setProducts(matchedProducts);
         if (results[1].data) {
           setBanners(results[1].data);
         }
@@ -70,6 +72,37 @@ export default function Shop() {
           setAllProducts(results[2].data);
         } else {
           setAllProducts([]);
+        }
+
+        // Fetch products of same category as search matched products
+        const searchQuery = searchParams.get('search');
+        if (searchQuery && matchedProducts.length > 0) {
+          const uniqueCats = [...new Set(matchedProducts.map(p => p.category).filter(Boolean))];
+          if (uniqueCats.length > 0) {
+            const catPromises = uniqueCats.map(cat => 
+              api.get('/products', { params: { category: cat } })
+            );
+            const catResults = await Promise.all(catPromises);
+            const matchedIds = new Set(matchedProducts.map(p => p._id));
+            const combinedCatProducts = [];
+            const seenIds = new Set();
+
+            catResults.forEach(res => {
+              if (res.data) {
+                res.data.forEach(p => {
+                  if (!matchedIds.has(p._id) && !seenIds.has(p._id)) {
+                    seenIds.add(p._id);
+                    combinedCatProducts.push(p);
+                  }
+                });
+              }
+            });
+            setCategoryProducts(combinedCatProducts);
+          } else {
+            setCategoryProducts([]);
+          }
+        } else {
+          setCategoryProducts([]);
         }
       } catch (err) {
         console.error('Failed to fetch data', err)
@@ -181,7 +214,7 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-gray-50 pt-2 lg:pt-4 pb-12 px-4 sm:px-6 lg:px-8">
       {/* Banner Section */}
-      {banners.length > 0 && (
+      {!searchParams.get('search') && banners.length > 0 && (
         <div className="-mx-4 sm:-mx-6 lg:-mx-8 mb-2 relative h-[150px] md:h-[250px] overflow-hidden shadow-md">
           {banners.map((banner, index) => (
             <div
@@ -242,12 +275,12 @@ export default function Shop() {
       {/* Header */}
       <div className="text-center mb-2">
         <h1 className="text-2xl font-bold text-gray-900 capitalize">
-          Products For You
+          {searchParams.get('search') ? `Search Results for "${searchParams.get('search')}"` : 'Products For You'}
         </h1>
       </div>
 
       {/* Horizontal Category Scroll (Meesho Style) */}
-      <CategorySection categories={categories} />
+      {!searchParams.get('search') && <CategorySection categories={categories} />}
 
       {/* Filter Bar (Mobile Only) */}
       <div className="lg:hidden sticky top-[76px] z-[30] bg-white shadow-sm mb-2 border-t border-b border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 transition-all duration-300">
@@ -643,8 +676,89 @@ export default function Shop() {
         ))}
       </div>
 
+      {/* Category Products Section (Shown when searching) */}
+      {searchParams.get('search') && categoryProducts.length > 0 && (
+        <>
+          <div className="my-12 flex items-center gap-4">
+            <div className="h-px bg-gray-200 flex-1"></div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <span>More from this category</span>
+            </h2>
+            <div className="h-px bg-gray-200 flex-1"></div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+            {categoryProducts.map((product) => (
+              <div
+                key={product._id}
+                className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+                onMouseEnter={() => setHoveredProduct(product._id)}
+                onMouseLeave={() => setHoveredProduct(null)}
+                onClick={() => navigate(`/product/${product._id}`)}
+              >
+                {/* Image Container */}
+                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200 h-64 relative">
+                  <img
+                    src={product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/300'}
+                    alt={product.name}
+                    className="h-full w-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                  />
+                  
+                  {/* Wishlist Button */}
+                  <button
+                    onClick={(e) => handleAction(e, 'wishlist', product)}
+                    className={`absolute top-3 right-3 p-2 rounded-full transition-colors shadow-sm backdrop-blur-sm ${
+                      isInWishlist(product._id) 
+                        ? 'bg-pink-500 text-white' 
+                        : 'bg-white/80 text-gray-400 hover:text-pink-500 hover:bg-white'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm font-medium text-pink-500 mb-1 truncate">
+                    {product.category}
+                  </p>
+                  <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-2 truncate leading-tight">
+                    {product.name}
+                  </h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3">
+                    <div className="flex flex-col">
+                      {product.discountPrice && product.discountPrice < product.price ? (
+                        <>
+                          <span className="text-base sm:text-xl font-bold text-[#fc2779]">
+                            ₹{product.discountPrice.toFixed(2)}
+                          </span>
+                          <span className="text-xs text-gray-400 line-through">
+                            ₹{product.price.toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-base sm:text-xl font-bold text-gray-900">
+                          ₹{product.price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => handleAction(e, 'cart', product)}
+                      className="flex items-center justify-center gap-2 bg-[#fc2779] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium hover:bg-[#d61f66] transition-colors transform active:scale-95 w-full sm:w-auto"
+                    >
+                      <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* All Products Section (Shown when filtering) */}
-      {allProducts.length > 0 && (
+      {!searchParams.get('search') && allProducts.length > 0 && (
         <>
           <div className="my-12 flex items-center gap-4">
             <div className="h-px bg-gray-200 flex-1"></div>

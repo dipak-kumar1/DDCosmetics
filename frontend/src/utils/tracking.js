@@ -15,6 +15,10 @@ export const getSessionToken = () => {
   return token;
 };
 
+// Set session token in axios headers
+api.defaults.headers.common['x-session-token'] = getSessionToken();
+
+
 // Track user interaction
 export const trackAction = async (action, product, timeSpent = 0) => {
   try {

@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
-import { Heart, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, ChevronRight, Share2, MapPin, Package } from 'lucide-react'
+import { Heart, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, ChevronRight, Share2, MapPin, Package, X, Check, Camera, Image as ImageIcon } from 'lucide-react'
 import api from '../services/api'
+import { trackAction } from '../utils/tracking'
+import ProductCarousel from '../components/ProductCarousel'
 
 export default function ProductDetails() {
   const { id } = useParams()
@@ -18,8 +20,38 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState('')
   const [currentSlide, setCurrentSlide] = useState(0)
   const [pincode, setPincode] = useState('')
-  const [relatedProducts, setRelatedProducts] = useState([])
-  const [recentlyViewed, setRecentlyViewed] = useState([])
+  const [similarProducts, setSimilarProducts] = useState([])
+  const [alsoBought, setAlsoBought] = useState([])
+  const [becauseYouViewed, setBecauseYouViewed] = useState([])
+  
+  // Reviews State
+  const [reviews, setReviews] = useState([])
+  const [reviewsSummary, setReviewsSummary] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+    distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+  })
+  const [eligibility, setEligibility] = useState({
+    canReview: false,
+    hasReviewed: false,
+    isVerified: false
+  })
+  const [filterImagesOnly, setFilterImagesOnly] = useState(false)
+  const [sortBy, setSortBy] = useState('latest')
+  const [loadingReviews, setLoadingReviews] = useState(false)
+
+  // Review Form State
+  const [ratingInput, setRatingInput] = useState(5)
+  const [ratingHover, setRatingHover] = useState(0)
+  const [commentInput, setCommentInput] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState([])
+  const [previewUrls, setPreviewUrls] = useState([])
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
+
+  // Lightbox State
+  const [activeLightboxImage, setActiveLightboxImage] = useState(null)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,31 +62,20 @@ export default function ProductDetails() {
           setActiveImage(res.data.images[0])
         }
         
-        // Fetch related products based on category
-        if (res.data.category) {
-          const relatedRes = await api.get('/products', { 
-            params: { category: res.data.category } 
-          })
-          setRelatedProducts(
-            relatedRes.data
-              .filter(p => p._id !== res.data._id)
-              .slice(0, 4) // Limit to 4 related products
-          )
-        }
+        // Track the view action immediately
+        trackAction('view', res.data);
 
-        // Handle Recently Viewed
-        const recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]')
-        
-        // Remove current product if it exists (to move it to top)
-        const filteredRecent = recent.filter(p => p._id !== res.data._id)
-        
-        // Add current product to top
-        const newRecent = [res.data, ...filteredRecent].slice(0, 10) // Keep last 10
-        
-        localStorage.setItem('recentlyViewed', JSON.stringify(newRecent))
-        
-        // Set state for display (excluding current product)
-        setRecentlyViewed(filteredRecent.slice(0, 8)) // Show 8 recent items
+        // Fetch product recommendations from the backend
+        try {
+          const recRes = await api.get(`/recommendations/product/${id}`);
+          if (recRes.data) {
+            setSimilarProducts(recRes.data.similarProducts || []);
+            setAlsoBought(recRes.data.customersAlsoBought || []);
+            setBecauseYouViewed(recRes.data.becauseYouViewedThis || []);
+          }
+        } catch (recErr) {
+          console.error('Failed to fetch product recommendations:', recErr);
+        }
         
       } catch (err) {
         console.error('Failed to fetch product', err)
@@ -65,6 +86,117 @@ export default function ProductDetails() {
     }
     fetchProduct()
   }, [id, navigate])
+
+  const fetchReviews = async () => {
+    setLoadingReviews(true)
+    try {
+      const res = await api.get(`/reviews/product/${id}`, {
+        params: { sort: sortBy, imagesOnly: filterImagesOnly }
+      })
+      setReviews(res.data.reviews || [])
+      if (res.data.summary) {
+        setReviewsSummary(res.data.summary)
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err)
+    } finally {
+      setLoadingReviews(false)
+    }
+  }
+
+  const checkReviewEligibility = async () => {
+    if (!user) return
+    try {
+      const res = await api.get(`/reviews/product/${id}/can-review`)
+      setEligibility(res.data)
+    } catch (err) {
+      console.error('Failed to check review eligibility:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchReviews()
+  }, [id, sortBy, filterImagesOnly])
+
+  useEffect(() => {
+    checkReviewEligibility()
+  }, [id, user])
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files)
+    const newFiles = [...selectedFiles, ...files].slice(0, 5)
+    setSelectedFiles(newFiles)
+
+    // revoke old preview URLs
+    previewUrls.forEach(url => URL.revokeObjectURL(url))
+    const urls = newFiles.map(file => URL.createObjectURL(file))
+    setPreviewUrls(urls)
+  }
+
+  const removeFile = (index) => {
+    const newFiles = selectedFiles.filter((_, idx) => idx !== index)
+    setSelectedFiles(newFiles)
+
+    previewUrls.forEach(url => URL.revokeObjectURL(url))
+    const urls = newFiles.map(file => URL.createObjectURL(file))
+    setPreviewUrls(urls)
+  }
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    if (!commentInput.trim()) {
+      setFormError('Please enter a comment.')
+      return
+    }
+    setSubmitting(true)
+    setFormError('')
+    setFormSuccess('')
+
+    const formData = new FormData()
+    formData.append('rating', ratingInput)
+    formData.append('comment', commentInput)
+    selectedFiles.forEach(file => {
+      formData.append('images', file)
+    })
+
+    try {
+      await api.post(`/reviews/product/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      setFormSuccess('Review submitted successfully!')
+      setCommentInput('')
+      setSelectedFiles([])
+      previewUrls.forEach(url => URL.revokeObjectURL(url))
+      setPreviewUrls([])
+      setRatingInput(5)
+      
+      // Refresh reviews & eligibility
+      fetchReviews()
+      checkReviewEligibility()
+
+      // Dynamically update product info to reflect new average rating
+      const updatedProdRes = await api.get(`/products/${id}`)
+      setProduct(updatedProdRes.data)
+    } catch (err) {
+      console.error(err)
+      setFormError(err.response?.data?.message || 'Failed to submit review.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Track time spent on product page
+  useEffect(() => {
+    if (!product) return;
+    const startTime = Date.now();
+
+    return () => {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      if (timeSpent >= 1) {
+        trackAction('view', product, timeSpent);
+      }
+    };
+  }, [product, id]);
 
   const handleScroll = (e) => {
     const scrollPosition = e.target.scrollLeft
@@ -262,9 +394,11 @@ export default function ProductDetails() {
               
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center bg-green-700 text-white px-2 py-0.5 rounded text-sm font-bold">
-                  4.5 <Star className="w-3 h-3 ml-1 fill-current" />
+                  {product.ratings > 0 ? product.ratings.toFixed(1) : '0.0'} <Star className="w-3 h-3 ml-1 fill-current" />
                 </div>
-                <span className="text-gray-500 text-sm">128 ratings & 45 reviews</span>
+                <a href="#reviews-section" className="text-[#fc2779] text-sm font-medium hover:underline">
+                  {product.numReviews || 0} reviews
+                </a>
               </div>
 
               <div className="border-b border-gray-200 pb-6 mb-6">
@@ -364,80 +498,310 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16 border-t border-gray-200 pt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Products</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {relatedProducts.map((item) => (
-                <div
-                  key={item._id}
-                  className="group relative bg-white border border-gray-100 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  onClick={() => {
-                    navigate(`/product/${item._id}`)
-                    window.scrollTo(0, 0)
-                  }}
-                >
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200 h-48 sm:h-64 relative">
-                    <img
-                      src={item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300'}
-                      alt={item.name}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+        {/* ================= REVIEW SECTION ================= */}
+        <div id="reviews-section" className="mt-16 border-t border-gray-200 pt-12">
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-8">Customer Reviews</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
+            {/* Rating Summary Card */}
+            <div className="lg:col-span-4 bg-gray-50/70 border border-gray-100 p-6 rounded-2xl text-center">
+              <div className="flex flex-col items-center">
+                <span className="text-6xl font-black text-slate-800">
+                  {reviewsSummary.averageRating > 0 ? reviewsSummary.averageRating.toFixed(1) : '0.0'}
+                </span>
+                <div className="flex items-center gap-1 my-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star 
+                      key={star} 
+                      className={`w-5 h-5 ${
+                        star <= Math.round(reviewsSummary.averageRating)
+                          ? 'fill-amber-400 text-amber-400' 
+                          : 'text-gray-300'
+                      }`} 
                     />
-                    <div className="absolute top-2 right-2">
-                       <button className="p-1.5 bg-white/80 rounded-full text-gray-400 hover:text-[#fc2779] backdrop-blur-sm">
-                          <Heart className="w-4 h-4" />
-                       </button>
+                  ))}
+                </div>
+                <span className="text-gray-500 text-sm font-medium">
+                  {reviewsSummary.totalReviews} ratings & reviews
+                </span>
+              </div>
+
+              {/* Breakdown Bars */}
+              <div className="mt-6 space-y-2">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = reviewsSummary.distribution[star] || 0;
+                  const total = reviewsSummary.totalReviews || 1; // avoid divide by zero
+                  const percentage = Math.round((count / total) * 100);
+                  return (
+                    <div key={star} className="flex items-center gap-3 text-sm text-gray-600">
+                      <span className="w-12 text-right font-semibold">{star} Star</span>
+                      <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#fc2779] rounded-full transition-all duration-500" 
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-left text-gray-400 text-xs">({count})</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Card: Write Review Form or Eligibility Message */}
+            <div className="lg:col-span-8">
+              {eligibility.canReview ? (
+                <form onSubmit={handleReviewSubmit} className="bg-pink-50/20 border border-pink-100/50 p-6 rounded-2xl shadow-sm">
+                  <h3 className="font-bold text-gray-900 mb-4 text-lg">Write a Customer Review</h3>
+                  
+                  {/* Star Rating Select */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Overall Rating</label>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onMouseEnter={() => setRatingHover(star)}
+                          onMouseLeave={() => setRatingHover(0)}
+                          onClick={() => setRatingInput(star)}
+                          className="focus:outline-none transition-transform duration-100 active:scale-95"
+                        >
+                          <Star 
+                            className={`w-8 h-8 cursor-pointer ${
+                              (ratingHover || ratingInput) >= star 
+                                ? 'fill-amber-400 text-amber-400' 
+                                : 'text-gray-300 hover:text-amber-300'
+                            }`} 
+                          />
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="p-3">
-                    <p className="text-xs text-[#fc2779] font-medium mb-1 truncate">{item.category}</p>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2 truncate">{item.name}</h3>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900">₹{item.price}</span>
-                      {item.discountPrice && item.discountPrice < item.price && (
-                        <span className="text-xs text-green-600 font-bold">
-                          {Math.round(((item.price - item.discountPrice) / item.price) * 100)}% Off
-                        </span>
-                      )}
+
+                  {/* Comment input */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Write your review</label>
+                    <textarea
+                      rows="4"
+                      required
+                      minLength={5}
+                      placeholder="What did you like or dislike? How was the product?"
+                      value={commentInput}
+                      onChange={(e) => setCommentInput(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white placeholder-gray-400 text-slate-800 text-sm transition-all"
+                    />
+                  </div>
+
+                  {/* Image Selector & Previews */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Upload product images (Max 5)</label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-pink-500 cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-pink-500 transition-colors">
+                        <Camera className="w-6 h-6" />
+                        <span className="text-[10px] font-bold mt-1">Add Image</span>
+                        <input
+                          id="review-image-input"
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          disabled={selectedFiles.length >= 5}
+                        />
+                      </label>
+
+                      {previewUrls.map((url, idx) => (
+                        <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 group">
+                          <img src={url} alt="preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeFile(idx)}
+                            className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  {formError && (
+                    <div className="mb-4 text-sm text-red-600 font-medium bg-red-50 px-4 py-2.5 rounded-lg border border-red-100">
+                      {formError}
+                    </div>
+                  )}
+
+                  {formSuccess && (
+                    <div className="mb-4 text-sm text-green-600 font-medium bg-green-50 px-4 py-2.5 rounded-lg border border-green-100">
+                      {formSuccess}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-6 py-3 bg-pink-600 hover:bg-pink-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg shadow-pink-100 hover:shadow-pink-200/50 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer text-sm"
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </form>
+              ) : eligibility.hasReviewed ? (
+                <div className="bg-gray-50 border border-gray-150 p-6 rounded-2xl text-center">
+                  <p className="text-gray-600 text-sm font-medium">You have already submitted a review for this product.</p>
+                </div>
+              ) : user ? (
+                <div className="bg-gray-50 border border-gray-150 p-6 rounded-2xl text-center">
+                  <p className="text-gray-600 text-sm font-medium">Only verified purchasers of this product can submit a review.</p>
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-150 p-6 rounded-2xl text-center">
+                  <p className="text-gray-600 text-sm font-medium">Please <Link to="/login" className="text-[#fc2779] font-bold hover:underline">log in</Link> to write a review.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Filters & Sorting Bar */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-4 mb-6 gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg text-sm text-gray-700 font-semibold focus:outline-none focus:ring-1 focus:ring-pink-400"
+              >
+                <option value="latest">Latest</option>
+                <option value="highest">Highest Rating</option>
+                <option value="lowest">Lowest Rating</option>
+              </select>
+            </div>
+
+            <button
+              onClick={() => setFilterImagesOnly(!filterImagesOnly)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
+                filterImagesOnly 
+                  ? 'bg-pink-50 border-pink-200 text-[#fc2779]' 
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                filterImagesOnly ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300'
+              }`}>
+                {filterImagesOnly && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <span>Reviews with images only</span>
+            </button>
+          </div>
+
+          {/* Reviews List */}
+          {loadingReviews ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#fc2779]"></div>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+              <p className="text-gray-500 font-medium">No reviews match your filters.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((rev) => (
+                <div key={rev._id} className="border border-gray-100 p-6 rounded-2xl bg-white shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-300">
+                  <div className="flex justify-between items-start mb-3 gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-slate-800 text-sm">{rev.user?.name || 'Anonymous User'}</span>
+                        {rev.isVerifiedPurchase && (
+                          <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-100/60 inline-flex items-center gap-1">
+                            <Check className="w-2.5 h-2.5" /> Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`w-3.5 h-3.5 ${
+                              star <= rev.rating 
+                                ? 'fill-amber-400 text-amber-400' 
+                                : 'text-gray-200'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium">
+                      {new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 text-sm mt-3 leading-relaxed whitespace-pre-line font-normal">
+                    {rev.comment}
+                  </p>
+
+                  {rev.images && rev.images.length > 0 && (
+                    <div className="flex gap-2.5 mt-4 overflow-x-auto pb-1 scrollbar-hide">
+                      {rev.images.map((imgUrl, idx) => (
+                        <div 
+                          key={idx} 
+                          onClick={() => setActiveLightboxImage(imgUrl)}
+                          className="w-18 h-18 rounded-xl overflow-hidden border border-gray-200 cursor-zoom-in hover:opacity-90 active:scale-95 transition-all duration-200 flex-shrink-0"
+                        >
+                          <img src={imgUrl} alt="review attachment" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Lightbox Zoom Modal */}
+        {activeLightboxImage && (
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-fade-in"
+            onClick={() => setActiveLightboxImage(null)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+              <img 
+                src={activeLightboxImage} 
+                alt="Review Zoom" 
+                className="w-auto h-auto max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" 
+              />
+              <button 
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2.5 transition-colors cursor-pointer"
+                onClick={() => setActiveLightboxImage(null)}
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* Recently Viewed */}
-        {recentlyViewed.length > 0 && (
+        {/* Similar Products */}
+        {similarProducts.length > 0 && (
           <div className="mt-16 border-t border-gray-200 pt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Recently Viewed</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {recentlyViewed.map((item) => (
-                <div
-                  key={item._id}
-                  className="group relative bg-white border border-gray-100 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  onClick={() => {
-                    navigate(`/product/${item._id}`)
-                    window.scrollTo(0, 0)
-                  }}
-                >
-                  <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200 h-48 sm:h-64 relative">
-                    <img
-                      src={item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/300'}
-                      alt={item.name}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="text-sm font-bold text-gray-900 mb-1 truncate">{item.name}</h3>
-                    <div className="flex items-center gap-2">
-                       <span className="font-bold text-gray-900">₹{item.price}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ProductCarousel title="Similar Products" products={similarProducts} />
+          </div>
+        )}
+
+        {/* Customers Also Bought */}
+        {alsoBought.length > 0 && (
+          <div className="mt-12 border-t border-gray-200 pt-8">
+            <ProductCarousel title="Customers Also Bought" products={alsoBought} />
+          </div>
+        )}
+
+        {/* Because You Viewed This */}
+        {becauseYouViewed.length > 0 && (
+          <div className="mt-12 border-t border-gray-200 pt-8">
+            <ProductCarousel title="Because You Viewed This" products={becauseYouViewed} />
           </div>
         )}
 

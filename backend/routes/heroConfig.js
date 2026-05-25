@@ -27,19 +27,24 @@ const storage = multer.diskStorage({
 const uploadFallback = multer({ storage: storage });
 
 // Helper for upload middleware
+const uploadFields = [
+  { name: 'image', maxCount: 1 },
+  { name: 'productImage', maxCount: 1 }
+];
+
 const uploadMiddleware = (req, res, next) => {
   const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME && 
                                  process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name' &&
                                  process.env.CLOUDINARY_API_KEY !== 'your_api_key';
 
   if (!isCloudinaryConfigured) {
-    return uploadFallback.single('image')(req, res, (err) => {
+    return uploadFallback.fields(uploadFields)(req, res, (err) => {
       if (err) return res.status(500).json({ message: 'Form parsing failed.' });
       next();
     });
   }
 
-  upload.single('image')(req, res, (err) => {
+  upload.fields(uploadFields)(req, res, (err) => {
     if (err) return res.status(500).json({ message: 'Image upload failed.' });
     next();
   });
@@ -74,14 +79,28 @@ router.put('/', auth, adminAuth, uploadMiddleware, async (req, res) => {
     }
 
     // Handle image upload
-    if (req.file) {
-      let imageUrl = '';
-      if (req.file.path && (req.file.path.startsWith('http') || req.file.path.startsWith('https'))) {
-        imageUrl = req.file.path;
-      } else {
-        imageUrl = `/uploads/${req.file.filename}`;
+    if (req.files) {
+      if (req.files.image && req.files.image[0]) {
+        const file = req.files.image[0];
+        let imageUrl = '';
+        if (file.path && (file.path.startsWith('http') || file.path.startsWith('https'))) {
+          imageUrl = file.path;
+        } else {
+          imageUrl = `/uploads/${file.filename}`;
+        }
+        config.backgroundImage = imageUrl;
       }
-      config.backgroundImage = imageUrl;
+      
+      if (req.files.productImage && req.files.productImage[0]) {
+        const file = req.files.productImage[0];
+        let imageUrl = '';
+        if (file.path && (file.path.startsWith('http') || file.path.startsWith('https'))) {
+          imageUrl = file.path;
+        } else {
+          imageUrl = `/uploads/${file.filename}`;
+        }
+        config.productImage = imageUrl;
+      }
     }
 
     // Handle text fields

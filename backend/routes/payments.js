@@ -5,6 +5,7 @@ const auth = require('../middleware/authMiddleware');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const UserActivity = require('../models/UserActivity');
 const { sendOrderConfirmationEmail } = require('../utils/emailService');
 
 const router = express.Router();
@@ -171,6 +172,20 @@ router.post('/verify-payment', auth, async (req, res) => {
       razorpayPaymentId: razorpay_payment_id,
       paidAt: new Date(),
     });
+
+    // Track purchase activity for recommendations
+    try {
+      const activities = normalizedItems.map(item => ({
+        user: req.user.id,
+        product: item.product,
+        action: 'purchase',
+        weight: 10,
+        timeSpent: 0
+      }));
+      await UserActivity.insertMany(activities);
+    } catch (activityErr) {
+      console.error('Failed to log purchase activity on payment confirmation:', activityErr.message);
+    }
 
     // Send Confirmation Email asynchronously
     User.findById(req.user.id)

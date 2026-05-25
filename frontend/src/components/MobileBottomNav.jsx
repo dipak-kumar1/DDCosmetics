@@ -36,11 +36,11 @@ const MobileBottomNav = () => {
       isActive: (pathname) => pathname === '/wholesale'
     },
     { 
-      id: 'orders',
-      path: '/dashboard?tab=orders', 
-      label: 'My Order', 
-      icon: FileText,
-      isActive: (pathname, search) => pathname === '/dashboard' && search.includes('tab=orders')
+      id: 'dashboard',
+      path: '/dashboard', 
+      label: 'Account', 
+      icon: User,
+      isActive: (pathname) => pathname === '/dashboard' || pathname === '/profile'
     },
   ];
 

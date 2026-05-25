@@ -20,7 +20,14 @@ exports.updateProfile = async (req, res) => {
     if (user) {
       user.name = name || user.name;
       if (mobile !== undefined) user.mobile = mobile;
-      if (gender) user.gender = gender;
+      if (gender) {
+        const sanitizedGender = gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+        if (['Male', 'Female', 'Other'].includes(sanitizedGender)) {
+          user.gender = sanitizedGender;
+        } else {
+          return res.status(400).json({ message: 'Invalid gender value. Allowed: Male, Female, Other' });
+        }
+      }
       if (email) user.email = email;
 
       const updatedUser = await user.save();

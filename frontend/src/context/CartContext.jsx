@@ -8,6 +8,7 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
+  const [activeUserId, setActiveUserId] = useState(user ? (user.id || user._id) : 'guest');
   const [cart, setCart] = useState(() => {
     try {
       const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
@@ -18,22 +19,30 @@ export const CartProvider = ({ children }) => {
     }
   });
 
+
   // Load cart when user changes (e.g. login/logout)
   useEffect(() => {
     try {
+      const currentId = user ? (user.id || user._id) : 'guest';
       const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
       const localCart = localStorage.getItem(storageKey);
       setCart(localCart ? JSON.parse(localCart) : []);
+      setActiveUserId(currentId);
     } catch {
       setCart([]);
+      setActiveUserId(user ? (user.id || user._id) : 'guest');
     }
   }, [user]);
 
   // Save cart when it changes
   useEffect(() => {
-    const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
-    localStorage.setItem(storageKey, JSON.stringify(cart));
-  }, [cart, user]);
+    const currentUserId = user ? (user.id || user._id) : 'guest';
+    if (currentUserId === activeUserId) {
+      const storageKey = user ? `cart_${user.id || user._id}` : 'cart_guest';
+      localStorage.setItem(storageKey, JSON.stringify(cart));
+    }
+  }, [cart, user, activeUserId]);
+
 
   const addToCart = (product, quantity = 1) => {
     trackAction('cart', product);

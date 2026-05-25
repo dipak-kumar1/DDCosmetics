@@ -12,6 +12,7 @@ const AdminHero = () => {
     title: '',
     subtitle: '',
     backgroundImage: '',
+    productImage: '',
     isActive: true,
     offerBadge: '',
     cta1: { text: '', type: 'custom_url', link: '' },
@@ -20,6 +21,8 @@ const AdminHero = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [productImageFile, setProductImageFile] = useState(null);
+  const [productPreviewUrl, setProductPreviewUrl] = useState('');
 
   useEffect(() => {
     fetchConfig();
@@ -31,6 +34,7 @@ const AdminHero = () => {
       if (res.data) {
         setConfig(res.data);
         setPreviewUrl(res.data.backgroundImage);
+        setProductPreviewUrl(res.data.productImage || '');
       }
     } catch (err) {
       console.error('Error fetching hero config:', err);
@@ -66,6 +70,14 @@ const AdminHero = () => {
     }
   };
 
+  const handleProductFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProductImageFile(file);
+      setProductPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -95,6 +107,10 @@ const AdminHero = () => {
       formData.append('image', imageFile);
     }
 
+    if (productImageFile) {
+      formData.append('productImage', productImageFile);
+    }
+
     try {
       const token = localStorage.getItem('dd_admin_token');
       const res = await api.put('/hero-config', formData, {
@@ -105,6 +121,7 @@ const AdminHero = () => {
       });
       setConfig(res.data);
       setImageFile(null);
+      setProductImageFile(null);
       alert('Hero section updated successfully!');
     } catch (err) {
       console.error('Error updating hero config:', err);
@@ -337,6 +354,44 @@ const AdminHero = () => {
               </div>
               <p className="text-xs text-gray-500 text-center">
                 Recommended size: 1920x800 px <br/>
+                Max file size: 5MB
+              </p>
+            </div>
+          </div>
+
+          {/* 3.5. Featured Product Image */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+              <div className="p-2 bg-pink-50 rounded-lg">
+                <ImageIcon className="w-5 h-5 text-pink-600" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-800">Featured Product Image</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="relative w-full aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center group">
+                {productPreviewUrl ? (
+                  <>
+                    <img src={productPreviewUrl} alt="Product Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <p className="text-white text-sm font-medium">Click to Change</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No image selected</p>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleProductFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                Recommended size: 400x500 px (Aspect Ratio 4:5) <br/>
                 Max file size: 5MB
               </p>
             </div>

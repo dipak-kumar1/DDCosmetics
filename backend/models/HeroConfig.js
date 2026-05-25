@@ -13,6 +13,10 @@ const HeroConfigSchema = new mongoose.Schema({
     type: String,
     // default can be a placeholder or empty
   },
+  productImage: {
+    type: String,
+    default: ''
+  },
   cta1: {
     text: { type: String, default: 'Shop Now' },
     type: { 
