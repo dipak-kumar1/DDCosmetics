@@ -27,6 +27,7 @@ import AdminEditProduct from './pages/admin/AdminEditProduct'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminBanners from './pages/admin/AdminBanners'
+import AdminPromoBanners from './pages/admin/AdminPromoBanners'
 import AdminHero from './pages/admin/AdminHero'
 import AdminChangePassword from './pages/admin/AdminChangePassword'
 import AdminRoute from './routes/AdminRoute'
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="banners" element={<AdminBanners />} />
+            <Route path="promo-banners" element={<AdminPromoBanners />} />
             <Route path="hero" element={<AdminHero />} />
             <Route path="change-password" element={<AdminChangePassword />} />
           </Route>

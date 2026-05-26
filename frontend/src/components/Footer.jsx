@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, Clock, Mail, Truck, Package, ShoppingBag } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Clock, Truck, Package, ShoppingBag } from 'lucide-react';
 
 const InstagramIcon = ({ className }) => (
   <svg
@@ -106,9 +106,9 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-pink-500 transition-colors flex items-center gap-2 group">
+                <Link to="/wishlist" className="text-gray-400 hover:text-pink-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 bg-gray-600 rounded-full group-hover:bg-pink-500 transition-colors"></span>
-                  Contact Us
+                  My Wishlist
                 </Link>
               </li>
             </ul>
@@ -118,11 +118,11 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-bold text-white mb-6">Top Categories</h4>
             <ul className="space-y-3">
-              {['Makeup', 'Skincare', 'Haircare', 'Fragrances', 'Bath & Body'].map((cat) => (
+              {['Makeup', 'Skincare', 'Body-Care', 'Perfumes', 'Shampoo', 'Facewash'].map((cat) => (
                 <li key={cat}>
                   <Link to={`/shop?category=${cat.toLowerCase()}`} className="text-gray-400 hover:text-pink-500 transition-colors flex items-center gap-2 group">
                     <span className="w-1.5 h-1.5 bg-gray-600 rounded-full group-hover:bg-pink-500 transition-colors"></span>
-                    {cat}
+                    {cat.replace('-', ' ')}
                   </Link>
                 </li>
               ))}
@@ -178,11 +178,6 @@ const Footer = () => {
         {/* ================= BOTTOM STRIP ================= */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
           <p>© {currentYear} DDCosmetics. All Rights Reserved.</p>
-          <div className="flex gap-6">
-            <Link to="/privacy-policy" className="hover:text-pink-500 transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-pink-500 transition-colors">Terms & Conditions</Link>
-            <Link to="/return-policy" className="hover:text-pink-500 transition-colors">Return Policy</Link>
-          </div>
         </div>
       </div>
     </footer>

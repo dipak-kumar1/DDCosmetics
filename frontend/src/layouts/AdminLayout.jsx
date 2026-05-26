@@ -28,6 +28,7 @@ const AdminLayout = () => {
     { name: 'Hero Section', path: '/admin/hero', icon: LayoutTemplate },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
     { name: 'Banners', path: '/admin/banners', icon: ImageIcon },
+    { name: 'Promo Banners', path: '/admin/promo-banners', icon: LayoutTemplate },
     { name: 'Change Password', path: '/admin/change-password', icon: Key },
     { name: 'View Shop', path: '/', icon: Store },
   ];

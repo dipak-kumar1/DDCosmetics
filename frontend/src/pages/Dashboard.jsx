@@ -308,37 +308,39 @@ export default function Dashboard() {
     const canChangeAddress = ['Pending Confirmation', 'Confirmed', 'Ready for Pickup'].includes(selectedOrder.status);
 
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 lg:p-8 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 lg:p-8 animate-in fade-in slide-in-from-right-4 duration-300">
         <button 
           onClick={() => setSelectedOrder(null)} 
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 transition-colors"
+          className="flex items-center gap-2 text-slate-500 hover:text-[#fc2779] mb-6 transition-colors text-sm font-semibold cursor-pointer"
         >
-          <ArrowLeft className="w-5 h-5" /> Back to Orders
+          <ArrowLeft className="w-4 h-4" /> Back to Orders
         </button>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-slate-100">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              Order #{selectedOrder._id.slice(-6).toUpperCase()}
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-3">
+              Order <span className="font-mono text-[#fc2779]">#{selectedOrder._id.slice(-6).toUpperCase()}</span>
             </h2>
-            <p className="text-gray-500 mt-1">Placed on {new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+            <p className="text-slate-400 text-xs mt-1.5 font-medium">
+              Placed on {new Date(selectedOrder.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
-          <div className="text-left md:text-right">
-            <p className="text-2xl font-bold text-gray-900">₹{selectedOrder.totalAmount?.toLocaleString()}</p>
-            <p className="text-sm text-gray-500">Paid via {selectedOrder.paymentMethod || 'Razorpay'}</p>
+          <div className="text-left sm:text-right bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl">
+            <p className="text-xs text-slate-400 font-medium">Total Amount</p>
+            <p className="text-xl font-extrabold text-[#fc2779] mt-0.5">₹{selectedOrder.totalAmount?.toLocaleString()}</p>
           </div>
         </div>
 
         {/* Status Timeline */}
-        <div className="mb-10 bg-gray-50 rounded-xl p-6 border border-gray-100">
-          <h3 className="font-bold text-gray-900 mb-6">Order Status</h3>
+        <div className="mb-10 bg-slate-50/50 rounded-2xl p-6 border border-slate-100/60">
+          <h3 className="font-bold text-slate-800 text-sm mb-6 uppercase tracking-wider">Order Status</h3>
           {isCancelled ? (
-             <div className="flex items-center gap-3 text-red-600 font-bold bg-red-50 p-4 rounded-lg border border-red-100">
-               <X className="w-6 h-6" /> Order Cancelled
+             <div className="flex items-center gap-3 text-rose-700 bg-rose-50 p-4 rounded-xl border border-rose-100 text-sm font-bold">
+               <X className="w-5 h-5 bg-rose-100 rounded-full p-1" /> Order Cancelled
              </div>
           ) : (
-            <div className="relative flex justify-between items-center max-w-2xl mx-auto">
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 w-full -z-10 rounded-full"></div>
+            <div className="relative flex justify-between items-center max-w-2xl mx-auto px-4">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 w-full -z-10 rounded-full"></div>
               <div 
                 className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-green-500 -z-10 rounded-full transition-all duration-500" 
                 style={{ width: `${Math.max(0, (currentIdx / (statuses.length - 1)) * 100)}%` }}
@@ -349,10 +351,16 @@ export default function Dashboard() {
                 const isCurrent = idx === currentIdx;
                 return (
                   <div key={status} className="flex flex-col items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-colors duration-300 ${isCompleted ? 'bg-green-500 text-white shadow-lg shadow-green-200' : 'bg-gray-200 text-gray-400'}`}>
-                      {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                      isCompleted 
+                        ? 'bg-green-500 text-white shadow-md shadow-green-100' 
+                        : 'bg-slate-200 text-slate-400'
+                    }`}>
+                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
                     </div>
-                    <span className={`text-[10px] sm:text-xs font-medium text-center hidden sm:block ${isCurrent ? 'text-green-600 font-bold' : 'text-gray-500'}`}>
+                    <span className={`text-[10px] sm:text-xs font-semibold text-center hidden sm:block ${
+                      isCurrent ? 'text-green-600 font-bold' : isCompleted ? 'text-slate-700' : 'text-slate-400'
+                    }`}>
                       {status}
                     </span>
                   </div>
@@ -365,44 +373,48 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Items */}
           <div className="md:col-span-2 space-y-6">
-            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-              <Package className="w-5 h-5 text-gray-400" /> Order Items
+            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+              <Package className="w-5 h-5 text-slate-400" /> Order Items
             </h3>
             <div className="space-y-4">
               {selectedOrder.items.map((item, idx) => (
-                <div key={idx} className="flex gap-4 p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors bg-white">
+                <div key={idx} className="flex gap-4 p-4 border border-slate-100 rounded-2xl hover:border-pink-200 hover:shadow-sm transition-all bg-white group/item">
                   {item.product ? (
-                    <Link to={`/product/${item.product._id}`} className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 hover:opacity-80 transition-opacity">
-                      {item.product.images?.[0] && (
+                    <Link to={`/product/${item.product._id}`} className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm hover:opacity-85 transition-opacity flex items-center justify-center">
+                      {item.product.images?.[0] ? (
                         <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-slate-400">No Img</span>
                       )}
                     </Link>
                   ) : (
-                    <div className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                      {item.product?.images?.[0] && (
+                    <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100 shadow-sm flex items-center justify-center">
+                      {item.product?.images?.[0] ? (
                         <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-slate-400">No Img</span>
                       )}
                     </div>
                   )}
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       {item.product ? (
-                        <Link to={`/product/${item.product._id}`} className="hover:text-pink-600 transition-colors inline-block">
-                          <h4 className="font-bold text-gray-900 leading-snug">{item.product.name}</h4>
+                        <Link to={`/product/${item.product._id}`} className="hover:text-[#fc2779] transition-colors inline-block">
+                          <h4 className="font-bold text-slate-850 leading-snug text-sm">{item.product.name}</h4>
                         </Link>
                       ) : (
-                        <h4 className="font-bold text-gray-900 leading-snug">{item.product?.name}</h4>
+                        <h4 className="font-bold text-slate-850 leading-snug text-sm">{item.product?.name}</h4>
                       )}
-                      <p className="text-sm text-gray-500 mt-1">Qty: {item.quantity}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-semibold">Qty: {item.quantity}</p>
                     </div>
                     <div className="flex justify-between items-end mt-2">
-                      <div className="font-bold text-gray-900">
+                      <div className="font-bold text-slate-900 text-sm">
                         ₹{item.price?.toLocaleString()}
                       </div>
                       {selectedOrder.status === 'Delivered' && item.product && (
                         <button
                           onClick={() => handleOpenReviewModal(item.product)}
-                          className="text-xs font-bold text-pink-600 hover:text-white hover:bg-pink-600 bg-pink-50 px-3 py-1.5 rounded-lg border border-pink-100 transition-all duration-200 cursor-pointer"
+                          className="text-xs font-bold text-pink-600 hover:text-white hover:bg-pink-600 bg-pink-50/50 px-3 py-1.5 rounded-lg border border-pink-100 transition-all duration-250 cursor-pointer"
                         >
                           Write Review
                         </button>
@@ -653,7 +665,7 @@ export default function Dashboard() {
           </div>
 
           {/* Main Content Area */}
-          <div className={`flex-1 ${activeTab === 'dashboard' ? 'hidden lg:block' : 'block'}`}>
+          <div className={`flex-1 min-w-0 ${activeTab === 'dashboard' ? 'hidden lg:block' : 'block'}`}>
             {/* Mobile View Active Tab Header */}
             {activeTab !== 'dashboard' && (
               <div className="lg:hidden flex items-center gap-3 mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
@@ -935,54 +947,96 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {orders.map((order) => (
-                        <div 
-                          key={order._id} 
-                          onClick={() => setSelectedOrder(order)}
-                          className="border border-gray-200 rounded-xl p-4 sm:p-6 hover:border-pink-300 hover:shadow-md cursor-pointer transition-all bg-white group"
-                        >
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 border-b border-gray-100 pb-4 relative">
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block pr-2">
-                              <ChevronRight className="w-6 h-6 text-pink-400" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-mono text-sm font-bold text-gray-900">#{order._id.slice(-6).toUpperCase()}</span>
-                                <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-                                  order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                                  order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                  'bg-yellow-100 text-yellow-700'
+                      {orders.map((order) => {
+                        const dateFormatted = new Date(order.createdAt).toLocaleDateString('en-US', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        });
+                        
+                        return (
+                          <div 
+                            key={order._id} 
+                            onClick={() => setSelectedOrder(order)}
+                            className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-pink-200 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                          >
+                            {/* Card Header */}
+                            <div className="bg-slate-50/80 px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center gap-2.5">
+                                <span className="font-mono text-sm font-bold text-slate-800">
+                                  #{order._id.slice(-6).toUpperCase()}
+                                </span>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border ${
+                                  order.status === 'Delivered' 
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-100' 
+                                    : order.status === 'Cancelled' 
+                                    ? 'bg-rose-50 text-rose-800 border-rose-100' 
+                                    : 'bg-amber-50 text-amber-800 border-amber-100'
                                 }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${
+                                    order.status === 'Delivered' 
+                                      ? 'bg-emerald-500 animate-pulse' 
+                                      : order.status === 'Cancelled' 
+                                      ? 'bg-rose-500' 
+                                      : 'bg-amber-500 animate-pulse'
+                                  }`}></span>
                                   {order.status}
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-500">
-                                Placed on {new Date(order.createdAt).toLocaleDateString()}
-                              </p>
+                              <span className="text-xs text-slate-400 font-medium">
+                                Placed on {dateFormatted}
+                              </span>
                             </div>
-                            <div className="text-right sm:pr-8">
-                              <p className="text-lg font-bold text-gray-900">₹{order.totalAmount?.toLocaleString()}</p>
-                              <p className="text-xs text-gray-500 mb-2">{order.items.length} Items</p>
+
+                            {/* Card Body (Products List) */}
+                            <div className="p-5 space-y-4">
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-4 group/item">
+                                  <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-sm flex items-center justify-center">
+                                    {item.product?.images?.[0] ? (
+                                      <img 
+                                        src={item.product.images[0]} 
+                                        alt={item.product.name} 
+                                        className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-200" 
+                                      />
+                                    ) : (
+                                      <span className="text-xs text-slate-400">No Img</span>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 line-clamp-2 group-hover:text-[#fc2779] transition-colors duration-150">
+                                      {item.product?.name || 'Product'}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1 font-medium">
+                                      Qty: {item.quantity} • ₹{item.price?.toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                  {item.product?.images?.[0] && (
-                                    <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{item.product?.name}</p>
-                                  <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                                </div>
+
+                            {/* Card Footer */}
+                            <div className="bg-slate-50/40 px-5 py-3 border-t border-slate-100 flex items-center justify-between gap-4">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Total Price</span>
+                                <span className="text-base font-extrabold text-slate-800 mt-0.5">
+                                  ₹{order.totalAmount?.toLocaleString()}
+                                </span>
                               </div>
-                            ))}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrder(order);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-lg shadow-sm hover:shadow transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+                              >
+                                <span>Track / Details</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

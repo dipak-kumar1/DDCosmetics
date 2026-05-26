@@ -173,7 +173,7 @@ const WholesaleProductExpanded = ({ product, onClose, qty, onQtyChange, addToCar
 
               {/* Description */}
               <div className="prose prose-sm max-w-none text-gray-600 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                  <p>{product.description || 'No detailed description available.'}</p>
+                  <p className="whitespace-pre-line">{product.description || 'No detailed description available.'}</p>
               </div>
 
               {/* Bulk Pricing Table */}

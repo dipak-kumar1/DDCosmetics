@@ -3,6 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import adminApi from '../../services/adminApi';
 import { Save, Image as ImageIcon, DollarSign, Layers, Package, AlignLeft, ArrowLeft, Plus, X } from 'lucide-react';
 
+const cleanDescription = (desc) => {
+  if (!desc) return '';
+  return desc
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 const AdminEditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -71,6 +81,16 @@ const AdminEditProduct = () => {
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (name === 'description') {
+      setFormData(prev => ({
+        ...prev,
+        description: cleanDescription(value)
+      }));
+    }
+  };
+
   const addBulkTier = () => {
     if (bulkTier.minQty && bulkTier.price) {
       setFormData({
@@ -113,7 +133,7 @@ const AdminEditProduct = () => {
     data.append('name', formData.name);
     data.append('price', formData.price);
     data.append('category', formData.category);
-    data.append('description', formData.description);
+    data.append('description', cleanDescription(formData.description));
     data.append('stock', formData.stock);
     
     // Wholesale Fields
@@ -389,8 +409,9 @@ const AdminEditProduct = () => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
-                rows="4"
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none resize-y leading-relaxed"
+                rows="6"
                 required
               ></textarea>
             </div>

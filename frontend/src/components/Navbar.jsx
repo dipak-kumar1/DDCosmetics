@@ -4,16 +4,17 @@ import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, ChevronRight, Home, Package, MapPin } from 'lucide-react';
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
   const navigate = useNavigate();
@@ -384,6 +385,18 @@ const Navbar = () => {
     }
   };
 
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
   return (
     <>
       {/* ================= TOP NOTIFICATION BAR ================= */}
@@ -435,7 +448,7 @@ const Navbar = () => {
                 {/* Dropdown Menu */}
                 {(isCategoryDropdownOpen || false) && (
                   <div 
-                    className="absolute top-[90%] left-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-3 transform transition-all duration-200 origin-top-left z-50"
+                    className="absolute top-[95%] left-1/2 -translate-x-1/2 mt-1.5 w-max max-w-4xl bg-white rounded-2xl shadow-xl border border-slate-100 p-4 flex flex-row flex-wrap items-center justify-center gap-3 z-50 animate-in fade-in duration-200"
                     onMouseLeave={() => setIsCategoryDropdownOpen(false)}
                   >
                     {categories.length > 0 ? (
@@ -443,7 +456,7 @@ const Navbar = () => {
                         <Link 
                           key={cat._id} 
                           to={`/shop?category=${cat.slug}`}
-                          className="block px-6 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#4f46e5] transition-colors font-medium"
+                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-[#fc2779] hover:bg-pink-50/50 bg-slate-50 border border-slate-100 hover:border-pink-100/60 rounded-xl transition-all duration-150 whitespace-nowrap"
                           onClick={() => setIsCategoryDropdownOpen(false)}
                         >
                           {cat.name}
@@ -582,92 +595,207 @@ const Navbar = () => {
       {/* Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-[60] lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[190] lg:hidden transition-all duration-300 animate-in fade-in"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Drawer */}
-      <div className={`fixed inset-y-0 left-0 z-[70] w-[80%] max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex flex-col h-full">
-          {/* Drawer Header */}
-          <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <span className="text-xl font-bold text-[#4f46e5]">DDCosmetics</span>
-            <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-red-500">
-              <X className="h-6 w-6" />
-            </button>
-          </div>
+      <div className={`fixed inset-y-0 left-0 z-[200] w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Drawer Header (Welcome Banner) */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-pink-500 to-[#fc2779] text-white p-5 flex flex-col justify-between h-40 flex-shrink-0">
+          {/* Close button on top right */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="absolute top-4 right-4 text-white/85 hover:text-white bg-black/10 hover:bg-black/20 p-1.5 rounded-full transition-colors cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-          {/* Drawer Links */}
-          <div className="flex-1 overflow-y-auto py-4">
-            <div className="flex flex-col space-y-1">
-              <Link 
-                to="/home" 
-                className="px-6 py-3 text-gray-700 font-medium hover:bg-[#4f46e5]/5 hover:text-[#4f46e5] border-l-4 border-transparent hover:border-[#4f46e5] transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/shop" 
-                className="px-6 py-3 text-gray-700 font-medium hover:bg-[#4f46e5]/5 hover:text-[#4f46e5] border-l-4 border-transparent hover:border-[#4f46e5] transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Shop
-              </Link>
-              
-              {/* Mobile Categories Accordion */}
-              <div className="border-t border-b border-gray-100 my-2 py-2">
-                <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Categories
-                </div>
-                {categories.map((cat) => (
-                  <Link 
-                    key={cat._id} 
-                    to={`/shop?category=${cat.slug}`}
-                    className="block px-6 py-3 text-gray-600 hover:text-[#4f46e5] hover:bg-gray-50 pl-8 transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+          <div className="absolute -left-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
 
-              <Link 
-                to="/wholesale" 
-                className="px-6 py-3 text-gray-700 font-medium hover:bg-[#4f46e5]/5 hover:text-[#4f46e5] border-l-4 border-transparent hover:border-[#4f46e5] transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Wholesale
-              </Link>
-            </div>
-          </div>
-
-          {/* Drawer Footer (Login/Profile) */}
-          <div className="p-4 border-t border-gray-100 bg-gray-50">
+          <div className="mt-auto relative z-10 flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3 px-2">
-                <div className="h-10 w-10 rounded-full bg-[#4f46e5] text-white flex items-center justify-center font-bold text-lg">
+              <>
+                <div className="w-12 h-12 rounded-full bg-white text-pink-650 flex items-center justify-center font-extrabold text-xl shadow-sm">
                   {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-pink-100 font-medium">Welcome back,</p>
+                  <p className="font-extrabold text-base truncate pr-6 leading-tight">{user.name}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-full bg-white/20 border border-white/30 text-white flex items-center justify-center font-extrabold text-xl">
+                  G
+                </div>
                 <div>
-                  <p className="font-medium text-gray-900">{user.name}</p>
-                  <Link to="/profile" className="text-sm text-[#4f46e5] hover:underline" onClick={() => setIsMobileMenuOpen(false)}>
-                    View Profile
+                  <p className="text-xs text-pink-100 font-medium">Welcome, Guest</p>
+                  <Link 
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-sm font-bold underline hover:text-pink-100 transition-colors"
+                  >
+                    Login / Register
                   </Link>
                 </div>
-              </div>
-            ) : (
-              <Link 
-                to="/login" 
-                className="flex items-center justify-center w-full py-3 bg-[#4f46e5] text-white rounded-lg font-semibold shadow-sm hover:bg-indigo-700 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Login / Sign Up
-              </Link>
+              </>
             )}
           </div>
         </div>
+
+        {/* Drawer Content */}
+        <div className="flex-1 overflow-y-auto py-4 px-2 space-y-4">
+          
+          {/* Section 1: Main Navigation */}
+          <div className="space-y-0.5">
+            <Link 
+              to="/home" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl"
+            >
+              <Home className="w-4.5 h-4.5 text-slate-400" />
+              <span>Home</span>
+            </Link>
+            <Link 
+              to="/shop" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl"
+            >
+              <ShoppingBag className="w-4.5 h-4.5 text-slate-400" />
+              <span>Shop Products</span>
+            </Link>
+            <Link 
+              to="/wholesale" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl"
+            >
+              <Package className="w-4.5 h-4.5 text-slate-400" />
+              <span>Wholesale Store</span>
+            </Link>
+          </div>
+
+          {/* Section 2: Categories (Accordion) */}
+          <div className="border-t border-slate-100 pt-2.5">
+            <button 
+              onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+              className="w-full px-4 py-2 flex items-center justify-between text-slate-400 font-bold uppercase tracking-wider text-[11px] cursor-pointer"
+            >
+              <span>Shop by Category</span>
+              <ChevronDown className={`w-4 h-4 text-slate-450 transition-transform duration-200 ${isCategoriesExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {isCategoriesExpanded && (
+              <div className="px-4 py-2 flex flex-row flex-wrap gap-2 animate-in fade-in duration-200">
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <Link 
+                      key={cat._id} 
+                      to={`/shop?category=${cat.slug}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-[#fc2779] hover:bg-pink-50/50 bg-slate-50 border border-slate-100 hover:border-pink-100/60 rounded-xl transition-all duration-150 whitespace-nowrap"
+                    >
+                      {cat.name}
+                    </Link>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-400 italic">No categories available</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: Account & Shopping shortcuts */}
+          <div className="border-t border-slate-100 pt-3.5 space-y-0.5">
+            <div className="px-4 pb-1.5 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+              My Account
+            </div>
+            
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (user) navigate('/profile');
+                else navigate('/login');
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl text-left cursor-pointer"
+            >
+              <User className="w-4.5 h-4.5 text-slate-400" />
+              <span>My Profile</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (user) navigate('/dashboard?tab=orders');
+                else navigate('/login');
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl text-left cursor-pointer"
+            >
+              <ShoppingBag className="w-4.5 h-4.5 text-slate-400" />
+              <span>My Orders</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (user) navigate('/dashboard?tab=addresses');
+                else navigate('/login');
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl text-left cursor-pointer"
+            >
+              <MapPin className="w-4.5 h-4.5 text-slate-400" />
+              <span>Saved Addresses</span>
+            </button>
+
+            <Link 
+              to="/wishlist" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl group"
+            >
+              <span className="flex items-center gap-3">
+                <Heart className="w-4.5 h-4.5 text-slate-400 group-hover:text-pink-500 transition-colors" />
+                <span>My Wishlist</span>
+              </span>
+              {getWishlistCount() > 0 && (
+                <span className="bg-pink-100 text-pink-600 text-xs font-extrabold px-2 py-0.5 rounded-full">
+                  {getWishlistCount()}
+                </span>
+              )}
+            </Link>
+
+            <Link 
+              to="/cart" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] transition-all rounded-xl group"
+            >
+              <span className="flex items-center gap-3">
+                <ShoppingBag className="w-4.5 h-4.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <span>Shopping Cart</span>
+              </span>
+              {getCartCount() > 0 && (
+                <span className="bg-indigo-50 text-indigo-650 text-xs font-extrabold px-2 py-0.5 rounded-full">
+                  {getCartCount()}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        {/* Drawer Footer */}
+        {user && (
+          <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between flex-shrink-0">
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                logout();
+              }}
+              className="w-full py-3 px-4 bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100 hover:text-rose-700 font-bold rounded-xl text-sm transition-colors text-center cursor-pointer"
+            >
+              Log Out
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

@@ -65,20 +65,74 @@ router.get('/dashboard-stats', auth, adminAuth, async (req, res) => {
     const totalUsers = await User.countDocuments({ role: 'user' });
     const pendingOrders = await Order.countDocuments({ status: 'Pending' });
 
-    // Calculate total revenue (optional, based on completed orders?)
-    // Let's just sum all orders for now or delivered ones
+    // Calculate total revenue (excluding Cancelled orders)
     const revenueAgg = await Order.aggregate([
-      { $match: { status: { $ne: 'Cancelled' } } }, // Example filter
+      { $match: { status: { $ne: 'Cancelled' } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
     const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
+
+    // Fetch recent 5 orders
+    const recentOrders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Aggregate top selling products from confirmed/paid orders
+    const topProductsAgg = await Order.aggregate([
+      { $match: { status: { $ne: 'Cancelled' } } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.product',
+          totalSales: { $sum: '$items.quantity' }
+        }
+      },
+      { $sort: { totalSales: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Populate top products
+    const topProducts = await Promise.all(
+      topProductsAgg.map(async (item) => {
+        if (!item._id) return null;
+        const prod = await Product.findById(item._id);
+        if (prod) {
+          return {
+            _id: prod._id,
+            name: prod.name,
+            price: prod.price,
+            category: prod.category,
+            images: prod.images,
+            sales: item.totalSales
+          };
+        }
+        return null;
+      })
+    );
+    const filteredTopProducts = topProducts.filter(p => p !== null);
+
+    // Fallback if no order items are present yet (use seeded totalSold)
+    let finalTopProducts = filteredTopProducts;
+    if (finalTopProducts.length === 0) {
+      const placeholderProds = await Product.find().sort({ totalSold: -1 }).limit(5);
+      finalTopProducts = placeholderProds.map(p => ({
+        _id: p._id,
+        name: p.name,
+        price: p.price,
+        category: p.category,
+        images: p.images,
+        sales: p.totalSold || 0
+      }));
+    }
 
     res.json({
       totalProducts,
       totalOrders,
       totalUsers,
       pendingOrders,
-      totalRevenue
+      totalRevenue,
+      recentOrders: recentOrders || [],
+      topSellingProducts: finalTopProducts || []
     });
   } catch (err) {
     console.error(err);
@@ -203,6 +257,24 @@ router.get('/products/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/admin/products/:id/toggle
+// @desc    Toggle product active/deactive status
+// @access  Private/Admin
+router.put('/products/:id/toggle', auth, adminAuth, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    product.isActive = !product.isActive;
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    console.error('Toggle Product Status Error:', err);
+    res.status(500).json({ message: 'Server error: ' + err.message });
+  }
+});
+
 // @route   PUT /api/admin/products/:id
 // @desc    Update product (or disable)
 // @access  Private/Admin
@@ -244,7 +316,8 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
       sellerType, 
       shopName, 
       contactNumber, 
-      location
+      location,
+      isActive
     } = req.body;
     
     // Find the existing product first
@@ -253,58 +326,63 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Determine images
-    let imageUrls = [];
-    
-    // Parse existing images
-    if (req.body.existingImages) {
-      try {
-        const parsed = JSON.parse(req.body.existingImages);
-        if (Array.isArray(parsed)) {
-          imageUrls = parsed;
-        } else if (typeof parsed === 'string') {
-           imageUrls = [parsed];
-        }
-      } catch (e) {
-        // Fallback if not JSON or just a single string
-        if (Array.isArray(req.body.existingImages)) {
-          imageUrls = req.body.existingImages;
-        } else {
-          imageUrls = [req.body.existingImages];
+    // Determine images (only modify if existingImages or new files are provided)
+    if (req.body.existingImages !== undefined || (req.files && req.files.length > 0)) {
+      let imageUrls = [];
+      
+      // Parse existing images
+      if (req.body.existingImages) {
+        try {
+          const parsed = JSON.parse(req.body.existingImages);
+          if (Array.isArray(parsed)) {
+            imageUrls = parsed;
+          } else if (typeof parsed === 'string') {
+             imageUrls = [parsed];
+          }
+        } catch (e) {
+          // Fallback if not JSON or just a single string
+          if (Array.isArray(req.body.existingImages)) {
+            imageUrls = req.body.existingImages;
+          } else {
+            imageUrls = [req.body.existingImages];
+          }
         }
       }
-    }
-    // If no existingImages field sent, it means user removed all old images? 
-    // Or frontend always sends the array. 
-    // If frontend sends empty array string "[]", imageUrls will be []. Correct.
 
-    // Append new uploaded images
-    if (req.files && req.files.length > 0) {
-      const newImageUrls = req.files.map(file => {
-        if (file.path && (file.path.startsWith('http') || file.path.startsWith('https'))) {
-          return file.path;
-        }
-        return `/uploads/${file.filename}`;
-      });
-      imageUrls = [...imageUrls, ...newImageUrls];
+      // Append new uploaded images
+      if (req.files && req.files.length > 0) {
+        const newImageUrls = req.files.map(file => {
+          if (file.path && (file.path.startsWith('http') || file.path.startsWith('https'))) {
+            return file.path;
+          }
+          return `/uploads/${file.filename}`;
+        });
+        imageUrls = [...imageUrls, ...newImageUrls];
+      }
+      
+      product.images = imageUrls;
     }
     
     // Update fields
     product.name = name || product.name;
-    product.price = price || product.price;
+    if (price !== undefined) product.price = Number(price);
     product.category = category || product.category;
     product.description = description || product.description;
-    product.stock = stock || product.stock;
-    product.images = imageUrls;
+    if (stock !== undefined) product.stock = Number(stock);
     
     // Wholesale fields update
     if (isWholesale !== undefined) product.isWholesale = isWholesale === 'true' || isWholesale === true;
-    if (moq !== undefined) product.moq = moq;
-    if (bulkPricing !== undefined) product.bulkPricing = JSON.parse(bulkPricing);
+    if (moq !== undefined) product.moq = Number(moq);
+    if (bulkPricing !== undefined) product.bulkPricing = typeof bulkPricing === 'string' ? JSON.parse(bulkPricing) : bulkPricing;
     if (sellerType !== undefined) product.sellerType = sellerType;
     if (shopName !== undefined) product.shopName = shopName;
     if (contactNumber !== undefined) product.contactNumber = contactNumber;
     if (location !== undefined) product.location = location;
+
+    // Active status update
+    if (isActive !== undefined) {
+      product.isActive = isActive === 'true' || isActive === true;
+    }
 
     await product.save();
     res.json(product);
