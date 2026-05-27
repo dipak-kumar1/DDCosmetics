@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, Clock, Truck, Package, ShoppingBag } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Clock, Mail } from 'lucide-react';
 
 const InstagramIcon = ({ className }) => (
   <svg
@@ -25,62 +25,29 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300 pt-16 pb-8 font-sans border-t-4 border-pink-600">
+    <footer className="bg-gray-900 text-gray-300 pt-10 pb-6 font-sans border-t-4 border-pink-600">
       <div className="container mx-auto px-4 lg:px-8">
         
-        {/* ================= USP SECTION (Local Store Highlights) ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 border-b border-gray-800 pb-12">
-          <div className="flex items-center gap-4 bg-gray-800/50 p-6 rounded-xl border border-gray-700 hover:border-pink-500/30 transition-colors">
-            <div className="w-12 h-12 bg-pink-900/30 rounded-full flex items-center justify-center text-pink-500">
-              <Package className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-bold text-white text-lg">Same Day Pickup</h4>
-              <p className="text-sm text-gray-400">Order online, pick up in-store today.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 bg-gray-800/50 p-6 rounded-xl border border-gray-700 hover:border-pink-500/30 transition-colors">
-            <div className="w-12 h-12 bg-pink-900/30 rounded-full flex items-center justify-center text-pink-500">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-bold text-white text-lg">Free Local Delivery</h4>
-              <p className="text-sm text-gray-400">Free delivery within 3km radius.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 bg-gray-800/50 p-6 rounded-xl border border-gray-700 hover:border-pink-500/30 transition-colors">
-            <div className="w-12 h-12 bg-pink-900/30 rounded-full flex items-center justify-center text-pink-500">
-              <ShoppingBag className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-bold text-white text-lg">Bulk Orders Accepted</h4>
-              <p className="text-sm text-gray-400">Special rates for wholesale orders.</p>
-            </div>
-          </div>
-        </div>
-
         {/* ================= MAIN FOOTER CONTENT ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           
           {/* Column 1: About Store */}
           <div>
-            <h3 className="text-2xl font-serif font-bold text-white mb-6 flex items-center gap-2">
+            <h3 className="text-xl font-serif font-bold text-white mb-4 flex items-center gap-2">
               <span className="text-pink-500">DD</span>Cosmetics
             </h3>
-            <p className="text-gray-400 mb-6 leading-relaxed">
-              Premium cosmetic products at best prices. Serving customers locally with 100% original brands. Your trusted beauty partner in Karimpur.
+            <p className="text-gray-400 mb-4 text-sm leading-relaxed">
+              Premium cosmetic products at best prices. Serving customers locally with 100% original brands. Your trusted beauty partner in Kohima.
             </p>
-            <div className="bg-gray-800/50 rounded-lg p-4 border-l-4 border-pink-500">
-              <p className="text-sm font-medium text-white italic">"Trusted Cosmetic Store in Karimpur"</p>
+            <div className="bg-gray-800/50 rounded-lg p-3 border-l-4 border-pink-500">
+              <p className="text-xs font-medium text-white italic">"Trusted Cosmetic Store in Kohima"</p>
             </div>
           </div>
 
           {/* Column 2: Quick Links */}
           <div>
-            <h4 className="text-lg font-bold text-white mb-6">Quick Links</h4>
-            <ul className="space-y-3">
+            <h4 className="text-base font-bold text-white mb-4">Quick Links</h4>
+            <ul className="space-y-2.5 text-sm">
               <li>
                 <Link to="/" className="text-gray-400 hover:text-pink-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 bg-gray-600 rounded-full group-hover:bg-pink-500 transition-colors"></span>
@@ -114,45 +81,36 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3: Shop Categories */}
+          {/* Column 3: Contact Information */}
           <div>
-            <h4 className="text-lg font-bold text-white mb-6">Top Categories</h4>
-            <ul className="space-y-3">
-              {['Makeup', 'Skincare', 'Body-Care', 'Perfumes', 'Shampoo', 'Facewash'].map((cat) => (
-                <li key={cat}>
-                  <Link to={`/shop?category=${cat.toLowerCase()}`} className="text-gray-400 hover:text-pink-500 transition-colors flex items-center gap-2 group">
-                    <span className="w-1.5 h-1.5 bg-gray-600 rounded-full group-hover:bg-pink-500 transition-colors"></span>
-                    {cat.replace('-', ' ')}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 4: Contact Information */}
-          <div>
-            <h4 className="text-lg font-bold text-white mb-6">Store Info</h4>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-pink-500 mt-1 flex-shrink-0" />
+            <h4 className="text-base font-bold text-white mb-4">Store Info</h4>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-2.5">
+                <MapPin className="w-4.5 h-4.5 text-pink-500 mt-1 flex-shrink-0" />
                 <span className="text-gray-400">
-                  Shop No. 12, Main Market Road, Near City Center, Karimpur, India 741152
+                  Shop Number B-20, T Khel Market BOC, Kohima, Nagaland, India 797120
                 </span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-pink-500 flex-shrink-0" />
-                <a href="tel:+919876543210" className="text-gray-400 hover:text-white transition-colors">
-                  +91 98765 43210
+              <li className="flex items-center gap-2.5">
+                <Phone className="w-4.5 h-4.5 text-pink-500 flex-shrink-0" />
+                <a href="tel:+917005009973" className="text-gray-400 hover:text-white transition-colors">
+                  +91 70050 09973
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <MessageCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                  +91 98765 43210 (WhatsApp)
+              <li className="flex items-center gap-2.5">
+                <MessageCircle className="w-4.5 h-4.5 text-green-500 flex-shrink-0" />
+                <a href="https://wa.me/917005009973" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  +91 70050 09973 (WhatsApp)
                 </a>
               </li>
-              <li className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-pink-500 mt-1 flex-shrink-0" />
+              <li className="flex items-center gap-2.5">
+                <Mail className="w-4.5 h-4.5 text-pink-500 flex-shrink-0" />
+                <a href="mailto:ddcosmetics@gmail.com" className="text-gray-400 hover:text-white transition-colors">
+                  ddcosmetics@gmail.com
+                </a>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Clock className="w-4.5 h-4.5 text-pink-500 mt-1 flex-shrink-0" />
                 <div className="text-gray-400">
                   <p>Mon - Sat: 10:00 AM - 9:00 PM</p>
                   <p>Sun: Closed</p>
@@ -161,14 +119,14 @@ const Footer = () => {
             </ul>
 
             {/* Social Media */}
-            <div className="mt-8">
-              <h5 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Follow Us</h5>
-              <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all transform hover:-translate-y-1">
-                  <InstagramIcon className="w-5 h-5" />
+            <div className="mt-6">
+              <h5 className="text-xs font-bold text-white mb-3 uppercase tracking-wider">Follow Us</h5>
+              <div className="flex gap-3.5">
+                <a href="#" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all transform hover:-translate-y-1">
+                  <InstagramIcon className="w-4.5 h-4.5" />
                 </a>
-                <a href="https://wa.me/919876543210" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all transform hover:-translate-y-1">
-                  <MessageCircle className="w-5 h-5" />
+                <a href="https://wa.me/917005009973" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all transform hover:-translate-y-1">
+                  <MessageCircle className="w-4.5 h-4.5" />
                 </a>
               </div>
             </div>
@@ -176,7 +134,7 @@ const Footer = () => {
         </div>
 
         {/* ================= BOTTOM STRIP ================= */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+        <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
           <p>© {currentYear} DDCosmetics. All Rights Reserved.</p>
         </div>
       </div>
