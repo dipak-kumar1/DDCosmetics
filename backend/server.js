@@ -6,20 +6,46 @@ require('dotenv').config();
 
 const app = express();
 
-// Connect DB
-connectDB();
+// Connect DB & Seed Admin User
+const seedAdminOnStartup = async () => {
+  try {
+    const User = require('./models/User');
+    const bcrypt = require('bcryptjs');
+    const adminEmail = 'admin@ddcosmetics.com';
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin) {
+      console.log('No admin user found. Creating default admin...');
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('adminpassword123', salt);
+      const newAdmin = new User({
+        name: 'Admin User',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin',
+        mobile: '1234567890',
+        gender: 'Male'
+      });
+      await newAdmin.save();
+      console.log('Default admin user created successfully!');
+    } else {
+      console.log('Admin user verified on startup.');
+    }
+  } catch (err) {
+    console.error('Error seeding default admin on startup:', err.message);
+  }
+};
+
+connectDB().then(() => {
+  seedAdminOnStartup();
+});
 
 if (!process.env.JWT_SECRET) {
   console.warn('WARNING: JWT_SECRET is not defined in .env file. Using default "secretkey" (INSECURE).');
 }
 
 // Middleware
-// app.use(cors());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://YOUR-VERCEL-URL.vercel.app'
-  ],
+  origin: true,
   credentials: true
 }));
 app.use(express.json());

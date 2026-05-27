@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const adminApi = axios.create({
-  baseURL: '/api/admin',
+  baseURL: 'https://ddcosmetics.onrender.com/api/admin',
   headers: {
     'Content-Type': 'application/json'
   }
