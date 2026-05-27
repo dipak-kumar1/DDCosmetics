@@ -3,6 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import adminApi from '../../services/adminApi';
 import { Save, Image as ImageIcon, DollarSign, Layers, Package, AlignLeft, ArrowLeft, Plus, X } from 'lucide-react';
 
+const SKIN_TYPES = ['Oily', 'Dry', 'Combination', 'Sensitive', 'Normal'];
+const SKIN_CONCERNS = ['Acne', 'Dryness', 'Glow', 'Anti-Aging', 'Dark Spots'];
+const FINISHES = ['Matte', 'Dewy', 'Satin', 'Glossy'];
+const PREFERENCES = ['Vegan', 'Organic', 'Cruelty-Free', 'Paraben-Free'];
+
 const cleanDescription = (desc) => {
   if (!desc) return '';
   return desc
@@ -29,7 +34,11 @@ const AdminEditProduct = () => {
     sellerType: 'own',
     shopName: '',
     contactNumber: '',
-    location: ''
+    location: '',
+    skinType: [],
+    skinConcern: [],
+    finish: '',
+    preferences: []
   });
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]); // Array of File objects
@@ -62,7 +71,11 @@ const AdminEditProduct = () => {
           sellerType: product.sellerType || 'own',
           shopName: product.shopName || '',
           contactNumber: product.contactNumber || '',
-          location: product.location || ''
+          location: product.location || '',
+          skinType: product.skinType || [],
+          skinConcern: product.skinConcern || [],
+          finish: product.finish || '',
+          preferences: product.preferences || []
         });
         setExistingImages(product.images || []);
       } catch (err) {
@@ -75,6 +88,20 @@ const AdminEditProduct = () => {
     };
     fetchData();
   }, [id, navigate]);
+
+  const handleCheckboxListChange = (field, val, isChecked) => {
+    const list = formData[field] || [];
+    let updated;
+    if (isChecked) {
+      updated = [...list, val];
+    } else {
+      updated = list.filter(item => item !== val);
+    }
+    setFormData({
+      ...formData,
+      [field]: updated
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -146,6 +173,11 @@ const AdminEditProduct = () => {
       data.append('location', formData.location);
       data.append('bulkPricing', JSON.stringify(formData.bulkPricing));
     }
+
+    data.append('finish', formData.finish);
+    data.append('skinType', JSON.stringify(formData.skinType));
+    data.append('skinConcern', JSON.stringify(formData.skinConcern));
+    data.append('preferences', JSON.stringify(formData.preferences));
     
     // Append existing images (as JSON string to be parsed on backend)
     data.append('existingImages', JSON.stringify(existingImages));
@@ -398,6 +430,85 @@ const AdminEditProduct = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Cosmetics Properties */}
+            <div className="bg-slate-50/50 p-6 rounded-xl border border-slate-200/80 space-y-6">
+              <h3 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2">Cosmetic Specifications</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Finish (Dropdown) */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Finish</label>
+                  <select
+                    name="finish"
+                    value={formData.finish}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none bg-white"
+                  >
+                    <option value="">Select Finish (Optional)</option>
+                    {FINISHES.map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Skin Type checkboxes */}
+                <div className="space-y-2">
+                  <span className="block text-sm font-semibold text-gray-700">Skin Type</span>
+                  <div className="space-y-2">
+                    {SKIN_TYPES.map(type => (
+                      <label key={type} className="flex items-center gap-2 text-sm text-gray-650 cursor-pointer hover:text-gray-900 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.skinType.includes(type)}
+                          onChange={(e) => handleCheckboxListChange('skinType', type, e.target.checked)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                        />
+                        {type}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skin Concern checkboxes */}
+                <div className="space-y-2">
+                  <span className="block text-sm font-semibold text-gray-700">Skin Concern</span>
+                  <div className="space-y-2">
+                    {SKIN_CONCERNS.map(concern => (
+                      <label key={concern} className="flex items-center gap-2 text-sm text-gray-650 cursor-pointer hover:text-gray-900 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.skinConcern.includes(concern)}
+                          onChange={(e) => handleCheckboxListChange('skinConcern', concern, e.target.checked)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                        />
+                        {concern}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preference checkboxes */}
+                <div className="space-y-2">
+                  <span className="block text-sm font-semibold text-gray-700">Preferences</span>
+                  <div className="space-y-2">
+                    {PREFERENCES.map(pref => (
+                      <label key={pref} className="flex items-center gap-2 text-sm text-gray-650 cursor-pointer hover:text-gray-900 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.preferences.includes(pref)}
+                          onChange={(e) => handleCheckboxListChange('preferences', pref, e.target.checked)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                        />
+                        {pref}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

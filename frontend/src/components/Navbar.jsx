@@ -399,11 +399,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ================= TOP NOTIFICATION BAR ================= */}
-      <div className="bg-gradient-to-r from-pink-500 to-indigo-600 text-white text-xs py-2 text-center font-medium tracking-wide font-sans">
-        <p>Free Shipping on Orders Over ₹999 | Easy Returns & Exchange</p>
-      </div>
-
       <div className="bg-white shadow-md relative lg:sticky lg:top-0 z-[100] w-full font-sans">
         {/* ================= DESKTOP (Top Row) ================= */}
         <div className="max-w-[1440px] mx-auto px-4 lg:px-10 w-full">

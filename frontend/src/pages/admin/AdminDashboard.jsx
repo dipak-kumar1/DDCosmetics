@@ -1,10 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminApi from '../../services/adminApi';
-import { ShoppingBag, Users, Package, DollarSign, TrendingUp, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  Users, 
+  Package, 
+  DollarSign, 
+  TrendingUp, 
+  ArrowUpRight, 
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight
+} from 'lucide-react';
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip 
+} from 'recharts';
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+        <p className="text-xs font-semibold text-gray-500 mb-1">{label}</p>
+        <p className="text-sm font-bold text-gray-900">
+          Revenue: <span className="text-indigo-600">₹{data.revenue.toLocaleString()}</span>
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          Orders: <span className="font-semibold text-gray-700">{data.orders || 0}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [chartView, setChartView] = useState('daily');
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -12,7 +50,10 @@ const AdminDashboard = () => {
     pendingOrders: 0,
     totalRevenue: 0,
     recentOrders: [],
-    topSellingProducts: []
+    topSellingProducts: [],
+    dailyRevenue: [],
+    monthlyRevenue: [],
+    lowStockProducts: []
   });
 
   useEffect(() => {
@@ -30,7 +71,7 @@ const AdminDashboard = () => {
   const cards = [
     { 
       title: 'Total Revenue', 
-      value: `₹${stats.totalRevenue.toLocaleString()}`, 
+      value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, 
       icon: DollarSign,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
@@ -39,7 +80,7 @@ const AdminDashboard = () => {
     },
     { 
       title: 'Total Orders', 
-      value: stats.totalOrders, 
+      value: stats.totalOrders || 0, 
       icon: ShoppingBag,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
@@ -48,7 +89,7 @@ const AdminDashboard = () => {
     },
     { 
       title: 'Total Users', 
-      value: stats.totalUsers, 
+      value: stats.totalUsers || 0, 
       icon: Users,
       color: 'text-purple-600',
       bg: 'bg-purple-50',
@@ -57,7 +98,7 @@ const AdminDashboard = () => {
     },
     { 
       title: 'Total Products', 
-      value: stats.totalProducts, 
+      value: stats.totalProducts || 0, 
       icon: Package,
       color: 'text-pink-600',
       bg: 'bg-pink-50',
@@ -68,6 +109,52 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Low Stock Alerts Section */}
+      {stats.lowStockProducts && stats.lowStockProducts.length > 0 && (
+        <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
+              <AlertTriangle className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="font-bold text-rose-900 text-base">Low Stock Alerts</h3>
+              <p className="text-xs text-rose-600/80">The following products/variants are running out of stock (less than 5 left).</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {stats.lowStockProducts.map((product) => {
+              const img = product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/50?text=Product';
+              return (
+                <div key={product._id} className="bg-white border border-rose-100 hover:border-rose-300 rounded-xl p-3 flex items-center justify-between shadow-sm transition-all duration-200">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img 
+                      src={img} 
+                      alt={product.name} 
+                      className="w-10 h-10 rounded-md object-cover border border-gray-100 flex-shrink-0"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/50?text=Product' }}
+                    />
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-xs truncate" title={product.name}>{product.name}</h4>
+                      <p className="text-[10px] text-gray-400 capitalize">{product.category}</p>
+                      <span className="inline-block mt-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                        {product.stock} left
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => navigate(`/admin/edit-product/${product._id}`)}
+                    className="flex items-center justify-center p-1.5 text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 rounded-lg transition-all duration-200 flex-shrink-0 ml-2"
+                    title="Edit Product"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, index) => {
@@ -96,6 +183,81 @@ const AdminDashboard = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Sales Analytics Section */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Sales Analytics Overview</h2>
+            <p className="text-xs text-gray-500">Track your daily and monthly store revenue</p>
+          </div>
+          <div className="flex bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setChartView('daily')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                chartView === 'daily'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-600 hover:text-indigo-900'
+              }`}
+            >
+              Daily (7d)
+            </button>
+            <button
+              onClick={() => setChartView('monthly')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                chartView === 'monthly'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-600 hover:text-indigo-900'
+              }`}
+            >
+              Monthly (6m)
+            </button>
+          </div>
+        </div>
+
+        <div className="h-[320px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={chartView === 'daily' ? stats.dailyRevenue || [] : stats.monthlyRevenue || []}
+              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis 
+                dataKey={chartView === 'daily' ? 'formattedDate' : 'month'} 
+                stroke="#94a3b8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                dy={10}
+              />
+              <YAxis 
+                stroke="#94a3b8"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(val) => `₹${val.toLocaleString()}`}
+              />
+              <Tooltip 
+                content={<CustomTooltip />}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#6366f1" 
+                strokeWidth={2.5}
+                fillOpacity={1} 
+                fill="url(#colorRevenue)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Recent Activity Section */}

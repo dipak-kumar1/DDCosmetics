@@ -30,6 +30,7 @@ import AdminBanners from './pages/admin/AdminBanners'
 import AdminPromoBanners from './pages/admin/AdminPromoBanners'
 import AdminHero from './pages/admin/AdminHero'
 import AdminChangePassword from './pages/admin/AdminChangePassword'
+import AdminUtilityBar from './pages/admin/AdminUtilityBar'
 import AdminRoute from './routes/AdminRoute'
 
 import { Toaster } from 'react-hot-toast'
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="banners" element={<AdminBanners />} />
             <Route path="promo-banners" element={<AdminPromoBanners />} />
             <Route path="hero" element={<AdminHero />} />
+            <Route path="utility-bar" element={<AdminUtilityBar />} />
             <Route path="change-password" element={<AdminChangePassword />} />
           </Route>
         </Route>

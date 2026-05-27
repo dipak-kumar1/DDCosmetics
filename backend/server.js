@@ -33,6 +33,7 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/utility-bar', require('./routes/utilityBar'));
 
 // Health Check / Ping
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date() }));
@@ -45,3 +46,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Trigger reload 2
+

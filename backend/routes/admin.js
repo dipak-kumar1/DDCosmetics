@@ -19,6 +19,19 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+const parseArrayField = (field) => {
+  if (!field) return [];
+  if (Array.isArray(field)) return field;
+  try {
+    const parsed = JSON.parse(field);
+    if (Array.isArray(parsed)) return parsed;
+  } catch (e) {}
+  if (typeof field === 'string') {
+    return field.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
@@ -125,6 +138,88 @@ router.get('/dashboard-stats', auth, adminAuth, async (req, res) => {
       }));
     }
 
+    // Aggregation for Daily Revenue (last 7 days)
+    const startOf7DaysAgo = new Date();
+    startOf7DaysAgo.setDate(startOf7DaysAgo.getDate() - 6);
+    startOf7DaysAgo.setHours(0, 0, 0, 0);
+
+    const dailyRevenueAgg = await Order.aggregate([
+      { 
+        $match: { 
+          status: { $ne: 'Cancelled' },
+          createdAt: { $gte: startOf7DaysAgo }
+        } 
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalAmount" },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const dailyRevenue = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const match = dailyRevenueAgg.find(item => item._id === dateStr);
+      dailyRevenue.push({
+        date: dateStr,
+        formattedDate: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+        revenue: match ? match.revenue : 0,
+        orders: match ? match.orders : 0
+      });
+    }
+
+    // Aggregation for Monthly Revenue (last 6 months)
+    const startOf6MonthsAgo = new Date();
+    startOf6MonthsAgo.setMonth(startOf6MonthsAgo.getMonth() - 5);
+    startOf6MonthsAgo.setDate(1);
+    startOf6MonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyRevenueAgg = await Order.aggregate([
+      { 
+        $match: { 
+          status: { $ne: 'Cancelled' },
+          createdAt: { $gte: startOf6MonthsAgo }
+        } 
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          revenue: { $sum: "$totalAmount" },
+          orders: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const monthlyRevenue = [];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const year = d.getFullYear();
+      const monthVal = d.getMonth() + 1;
+      const match = monthlyRevenueAgg.find(item => item._id && item._id.year === year && item._id.month === monthVal);
+      monthlyRevenue.push({
+        month: `${monthNames[d.getMonth()]} ${year.toString().slice(-2)}`,
+        revenue: match ? match.revenue : 0,
+        orders: match ? match.orders : 0
+      });
+    }
+
+    // Fetch products with low stock (less than 5)
+    const lowStockProducts = await Product.find({
+      isActive: true,
+      stock: { $lt: 5 }
+    }).select('name stock price images category');
+
     res.json({
       totalProducts,
       totalOrders,
@@ -132,7 +227,10 @@ router.get('/dashboard-stats', auth, adminAuth, async (req, res) => {
       pendingOrders,
       totalRevenue,
       recentOrders: recentOrders || [],
-      topSellingProducts: finalTopProducts || []
+      topSellingProducts: finalTopProducts || [],
+      dailyRevenue,
+      monthlyRevenue,
+      lowStockProducts: lowStockProducts || []
     });
   } catch (err) {
     console.error(err);
@@ -195,7 +293,11 @@ router.post('/products', auth, adminAuth, (req, res, next) => {
       sellerType, 
       shopName, 
       contactNumber, 
-      location 
+      location,
+      skinType,
+      skinConcern,
+      finish,
+      preferences
     } = req.body;
     
     // Determine images
@@ -227,7 +329,11 @@ router.post('/products', auth, adminAuth, (req, res, next) => {
       sellerType: sellerType || 'own',
       shopName: shopName || '',
       contactNumber: contactNumber || '',
-      location: location || ''
+      location: location || '',
+      skinType: parseArrayField(skinType),
+      skinConcern: parseArrayField(skinConcern),
+      finish: finish || '',
+      preferences: parseArrayField(preferences)
     });
 
     await newProduct.save();
@@ -317,7 +423,11 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
       shopName, 
       contactNumber, 
       location,
-      isActive
+      isActive,
+      skinType,
+      skinConcern,
+      finish,
+      preferences
     } = req.body;
     
     // Find the existing product first
@@ -383,6 +493,12 @@ router.put('/products/:id', auth, adminAuth, (req, res, next) => {
     if (isActive !== undefined) {
       product.isActive = isActive === 'true' || isActive === true;
     }
+
+    // Cosmetic Filters
+    if (skinType !== undefined) product.skinType = parseArrayField(skinType);
+    if (skinConcern !== undefined) product.skinConcern = parseArrayField(skinConcern);
+    if (finish !== undefined) product.finish = finish;
+    if (preferences !== undefined) product.preferences = parseArrayField(preferences);
 
     await product.save();
     res.json(product);

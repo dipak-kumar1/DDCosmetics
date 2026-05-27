@@ -7,6 +7,11 @@ import { Heart, ShoppingBag, ArrowRight, ArrowUpDown, ChevronDown, Filter, X, Ch
 import api from '../services/api'
 import CategorySection from '../components/CategorySection'
 
+const SKIN_TYPES = ['Oily', 'Dry', 'Combination', 'Sensitive', 'Normal'];
+const SKIN_CONCERNS = ['Acne', 'Dryness', 'Glow', 'Anti-Aging', 'Dark Spots'];
+const FINISHES = ['Matte', 'Dewy', 'Satin', 'Glossy'];
+const PREFERENCES = ['Vegan', 'Organic', 'Cruelty-Free', 'Paraben-Free'];
+
 export default function Shop() {
   const { user } = useContext(AuthContext)
   const { addToCart } = useCart()
@@ -26,6 +31,43 @@ export default function Shop() {
   const [activeModal, setActiveModal] = useState(null)
   const [sortOption, setSortOption] = useState('relevance')
   const [selectedGender, setSelectedGender] = useState(null)
+
+  const [expandedSections, setExpandedSections] = useState({
+    sort: true,
+    category: true,
+    gender: true,
+    skinType: true,
+    skinConcern: true,
+    finish: true,
+    preferences: true,
+    discount: true
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const handleFilterToggle = (key, value) => {
+    const newParams = new URLSearchParams(searchParams);
+    const currentVal = newParams.get(key);
+    let currentList = currentVal ? currentVal.split(',') : [];
+    
+    if (currentList.includes(value)) {
+      currentList = currentList.filter(item => item !== value);
+    } else {
+      currentList = [...currentList, value];
+    }
+    
+    if (currentList.length > 0) {
+      newParams.set(key, currentList.join(','));
+    } else {
+      newParams.delete(key);
+    }
+    setSearchParams(newParams);
+  };
 
   // Fetch Categories
   useEffect(() => {
@@ -48,8 +90,20 @@ export default function Shop() {
         if (searchParams.get('search')) params.search = searchParams.get('search');
         if (searchParams.get('tag')) params.tag = searchParams.get('tag');
         if (searchParams.get('discount')) params.discount = searchParams.get('discount');
+        if (searchParams.get('skinType')) params.skinType = searchParams.get('skinType');
+        if (searchParams.get('skinConcern')) params.skinConcern = searchParams.get('skinConcern');
+        if (searchParams.get('finish')) params.finish = searchParams.get('finish');
+        if (searchParams.get('preferences')) params.preferences = searchParams.get('preferences');
 
-        const hasFilters = Object.keys(params).length > 0;
+        const hasFilters = 
+          searchParams.get('category') || 
+          searchParams.get('search') || 
+          searchParams.get('tag') || 
+          searchParams.get('discount') ||
+          searchParams.get('skinType') ||
+          searchParams.get('skinConcern') ||
+          searchParams.get('finish') ||
+          searchParams.get('preferences');
 
         const promises = [
           api.get('/products', { params }),
@@ -430,31 +484,142 @@ export default function Shop() {
 
             {/* Filter Options */}
             {activeModal === 'filter' && (
-              <div className="p-4">
-                <p className="text-gray-500 text-sm mb-4">Refine your search</p>
-                <div className="space-y-4">
-                  <button
-                    onClick={() => {
-                      const newParams = new URLSearchParams(searchParams);
-                      newParams.set('discount', 'true');
-                      setSearchParams(newParams);
-                      setActiveModal(null);
-                    }}
-                    className={`w-full p-3 rounded-lg border text-sm font-medium flex justify-between items-center ${searchParams.get('discount') ? 'border-[#fc2779] bg-pink-50 text-[#fc2779]' : 'border-gray-200 text-gray-700'}`}
-                  >
-                    <span>On Discount</span>
-                    {searchParams.get('discount') && <div className="w-2 h-2 bg-[#fc2779] rounded-full" />}
-                  </button>
+              <div className="p-4 space-y-6">
+                <p className="text-gray-500 text-xs">Refine your search with specialized cosmetics filters</p>
+                
+                {/* Accordion List for Mobile */}
+                <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-1">
                   
+                  {/* Skin Type */}
+                  <div className="border-b border-gray-100 pb-3">
+                    <button onClick={() => toggleSection('skinType')} className="w-full flex items-center justify-between text-left font-bold text-gray-800 text-xs py-1">
+                      <span>SKIN TYPE</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedSections.skinType ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedSections.skinType && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {SKIN_TYPES.map(type => {
+                          const isChecked = (searchParams.get('skinType') || '').split(',').includes(type);
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => handleFilterToggle('skinType', type)}
+                              className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition-all ${isChecked ? 'bg-pink-50 border-[#fc2779] text-[#fc2779]' : 'border-gray-200 text-gray-655 bg-gray-50/50'}`}
+                            >
+                              {type}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skin Concern */}
+                  <div className="border-b border-gray-100 pb-3">
+                    <button onClick={() => toggleSection('skinConcern')} className="w-full flex items-center justify-between text-left font-bold text-gray-800 text-xs py-1">
+                      <span>SKIN CONCERN</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedSections.skinConcern ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedSections.skinConcern && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {SKIN_CONCERNS.map(concern => {
+                          const isChecked = (searchParams.get('skinConcern') || '').split(',').includes(concern);
+                          return (
+                            <button
+                              key={concern}
+                              onClick={() => handleFilterToggle('skinConcern', concern)}
+                              className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition-all ${isChecked ? 'bg-pink-50 border-[#fc2779] text-[#fc2779]' : 'border-gray-200 text-gray-655 bg-gray-50/50'}`}
+                            >
+                              {concern}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Finish */}
+                  <div className="border-b border-gray-100 pb-3">
+                    <button onClick={() => toggleSection('finish')} className="w-full flex items-center justify-between text-left font-bold text-gray-800 text-xs py-1">
+                      <span>FINISH</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedSections.finish ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedSections.finish && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {FINISHES.map(f => {
+                          const isChecked = (searchParams.get('finish') || '').split(',').includes(f);
+                          return (
+                            <button
+                              key={f}
+                              onClick={() => handleFilterToggle('finish', f)}
+                              className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition-all ${isChecked ? 'bg-pink-50 border-[#fc2779] text-[#fc2779]' : 'border-gray-200 text-gray-655 bg-gray-50/50'}`}
+                            >
+                              {f}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preferences */}
+                  <div className="border-b border-gray-100 pb-3">
+                    <button onClick={() => toggleSection('preferences')} className="w-full flex items-center justify-between text-left font-bold text-gray-800 text-xs py-1">
+                      <span>PREFERENCES</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedSections.preferences ? 'rotate-180' : ''}`} />
+                    </button>
+                    {expandedSections.preferences && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {PREFERENCES.map(pref => {
+                          const isChecked = (searchParams.get('preferences') || '').split(',').includes(pref);
+                          return (
+                            <button
+                              key={pref}
+                              onClick={() => handleFilterToggle('preferences', pref)}
+                              className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition-all ${isChecked ? 'bg-pink-50 border-[#fc2779] text-[#fc2779]' : 'border-gray-200 text-gray-655 bg-gray-50/50'}`}
+                            >
+                              {pref}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* On Discount option */}
+                  <div className="pb-1">
+                    <button
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        if (searchParams.get('discount')) newParams.delete('discount');
+                        else newParams.set('discount', 'true');
+                        setSearchParams(newParams);
+                      }}
+                      className={`w-full p-2.5 rounded-lg border text-xs font-bold flex justify-between items-center transition-all ${searchParams.get('discount') ? 'border-[#fc2779] bg-pink-50 text-[#fc2779]' : 'border-gray-200 text-gray-700 bg-gray-50/50'}`}
+                    >
+                      <span>ON DISCOUNT</span>
+                      {searchParams.get('discount') && <div className="w-1.5 h-1.5 bg-[#fc2779] rounded-full" />}
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Clear and Close */}
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => {
                       setSearchParams({});
                       setSortOption('relevance');
                       setActiveModal(null);
                     }}
-                    className="w-full p-3 rounded-lg border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50"
+                    className="flex-1 py-2.5 border border-red-200 text-red-500 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-50 transition-colors"
                   >
-                    Clear All Filters
+                    Clear All
+                  </button>
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="flex-1 py-2.5 bg-[#fc2779] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#d61f66] transition-colors"
+                  >
+                    Apply Filters
                   </button>
                 </div>
               </div>
@@ -548,49 +713,203 @@ export default function Shop() {
 
             {/* Gender Section */}
             <div className="border-b border-gray-200 pb-6">
-              <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide text-sm">Gender</h3>
-              <div className="space-y-3">
-                {['Women', 'Men', 'Girls', 'Boys'].map((g) => (
-                   <label key={g} className="flex items-center gap-3 cursor-pointer group">
-                     <div className={`w-4 h-4 border rounded flex items-center justify-center ${searchParams.get('tag') === g ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
-                       {searchParams.get('tag') === g && <Check className="w-3 h-3 text-white" />}
+              <button 
+                onClick={() => toggleSection('gender')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Gender</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.gender ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.gender && (
+                <div className="mt-3 space-y-3">
+                  {['Women', 'Men', 'Girls', 'Boys'].map((g) => (
+                     <label key={g} className="flex items-center gap-3 cursor-pointer group">
+                       <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${searchParams.get('tag') === g ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                         {searchParams.get('tag') === g && <Check className="w-3 h-3 text-white" />}
+                       </div>
+                       <span className={`text-sm ${searchParams.get('tag') === g ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                         {g}
+                       </span>
+                       <input 
+                         type="checkbox" 
+                         checked={searchParams.get('tag') === g}
+                         onChange={() => handleGenderSelect(searchParams.get('tag') === g ? null : g)}
+                         className="hidden"
+                       />
+                     </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Skin Type Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <button 
+                onClick={() => toggleSection('skinType')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Skin Type</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.skinType ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.skinType && (
+                <div className="mt-3 space-y-3">
+                  {SKIN_TYPES.map((type) => {
+                    const isChecked = (searchParams.get('skinType') || '').split(',').includes(type);
+                    return (
+                      <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${isChecked ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                          {isChecked && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <span className={`text-sm ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                          {type}
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleFilterToggle('skinType', type)}
+                          className="hidden"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Skin Concern Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <button 
+                onClick={() => toggleSection('skinConcern')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Skin Concern</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.skinConcern ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.skinConcern && (
+                <div className="mt-3 space-y-3">
+                  {SKIN_CONCERNS.map((concern) => {
+                    const isChecked = (searchParams.get('skinConcern') || '').split(',').includes(concern);
+                    return (
+                      <label key={concern} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${isChecked ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                          {isChecked && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <span className={`text-sm ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-655 group-hover:text-gray-900'}`}>
+                          {concern}
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleFilterToggle('skinConcern', concern)}
+                          className="hidden"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Finish Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <button 
+                onClick={() => toggleSection('finish')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Finish</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.finish ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.finish && (
+                <div className="mt-3 space-y-3">
+                  {FINISHES.map((f) => {
+                    const isChecked = (searchParams.get('finish') || '').split(',').includes(f);
+                    return (
+                      <label key={f} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${isChecked ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                          {isChecked && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <span className={`text-sm ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-655 group-hover:text-gray-900'}`}>
+                          {f}
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleFilterToggle('finish', f)}
+                          className="hidden"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Preferences Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <button 
+                onClick={() => toggleSection('preferences')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Preferences</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.preferences ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.preferences && (
+                <div className="mt-3 space-y-3">
+                  {PREFERENCES.map((pref) => {
+                    const isChecked = (searchParams.get('preferences') || '').split(',').includes(pref);
+                    return (
+                      <label key={pref} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${isChecked ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                          {isChecked && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <span className={`text-sm ${isChecked ? 'text-gray-900 font-medium' : 'text-gray-655 group-hover:text-gray-900'}`}>
+                          {pref}
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleFilterToggle('preferences', pref)}
+                          className="hidden"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+             {/* Filters (Discount) Section */}
+            <div className="border-b border-gray-200 pb-6">
+              <button 
+                onClick={() => toggleSection('discount')}
+                className="w-full flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wide text-sm py-2 hover:text-[#fc2779] transition-colors"
+              >
+                <span>Offers</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedSections.discount ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedSections.discount && (
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                     <div className={`w-4 h-4 border rounded flex items-center justify-center transition-colors ${searchParams.get('discount') ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
+                       {searchParams.get('discount') && <Check className="w-3 h-3 text-white" />}
                      </div>
-                     <span className={`text-sm ${searchParams.get('tag') === g ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
-                       {g}
+                     <span className={`text-sm ${searchParams.get('discount') ? 'text-[#fc2779] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                       On Discount
                      </span>
                      <input 
                        type="checkbox" 
-                       checked={searchParams.get('tag') === g}
-                       onChange={() => handleGenderSelect(searchParams.get('tag') === g ? null : g)}
+                       checked={!!searchParams.get('discount')}
+                       onChange={() => {
+                          const newParams = new URLSearchParams(searchParams);
+                          if (searchParams.get('discount')) newParams.delete('discount');
+                          else newParams.set('discount', 'true');
+                          setSearchParams(newParams);
+                       }}
                        className="hidden"
                      />
                    </label>
-                ))}
-              </div>
-            </div>
-
-             {/* Filters Section */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="font-bold text-gray-900 mb-4 uppercase tracking-wide text-sm">Filters</h3>
-              <label className="flex items-center gap-3 cursor-pointer group">
-                 <div className={`w-4 h-4 border rounded flex items-center justify-center ${searchParams.get('discount') ? 'bg-[#fc2779] border-[#fc2779]' : 'border-gray-300 group-hover:border-[#fc2779]'}`}>
-                   {searchParams.get('discount') && <Check className="w-3 h-3 text-white" />}
-                 </div>
-                 <span className={`text-sm ${searchParams.get('discount') ? 'text-gray-900 font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>
-                   On Discount
-                 </span>
-                 <input 
-                   type="checkbox" 
-                   checked={!!searchParams.get('discount')}
-                   onChange={() => {
-                      const newParams = new URLSearchParams(searchParams);
-                      if (searchParams.get('discount')) newParams.delete('discount');
-                      else newParams.set('discount', 'true');
-                      setSearchParams(newParams);
-                   }}
-                   className="hidden"
-                 />
-               </label>
+                </div>
+              )}
             </div>
 
             {/* Clear Filters */}

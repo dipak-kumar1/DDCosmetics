@@ -77,15 +77,6 @@ const ProductCard = ({ product, badge }) => {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         
-        {/* Quick Add to Cart (Desktop only) */}
-        <div className="absolute inset-x-4 bottom-4 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-350 hidden md:block">
-          <button 
-            onClick={handleAddToCart}
-            className="w-full bg-white/95 backdrop-blur-xs hover:bg-[#fc2779] hover:text-white text-slate-800 py-3 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all border border-slate-100"
-          >
-            <ShoppingBag className="w-4.5 h-4.5" /> Quick Add
-          </button>
-        </div>
       </div>
 
       {/* Product Details */}
@@ -119,14 +110,6 @@ const ProductCard = ({ product, badge }) => {
               <span className="text-lg font-black text-slate-800">₹{product.price}</span>
             )}
           </div>
-          
-          {/* Quick Add Button (Mobile only) */}
-          <button 
-            onClick={handleAddToCart}
-            className="md:hidden p-2.5 bg-slate-50 text-slate-700 hover:bg-pink-50 hover:text-[#fc2779] border border-slate-100 rounded-xl transition-colors"
-          >
-            <ShoppingBag className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </Link>
@@ -141,6 +124,7 @@ const Home = () => {
   const [trending, setTrending] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [exploreProducts, setExploreProducts] = useState([]);
   const newArrivalsRef = useRef(null);
   const categoriesRef = useRef(null);
 
@@ -181,14 +165,16 @@ const Home = () => {
 
     const fetchHomeSectionsData = async () => {
       try {
-        const [trendingRes, newRes, catRes] = await Promise.all([
+        const [trendingRes, newRes, catRes, exploreRes] = await Promise.all([
           api.get('/products/trending'),
           api.get('/products/new-arrivals'),
-          api.get('/categories')
+          api.get('/categories'),
+          api.get('/products', { params: { limit: 20 } })
         ]);
         setTrending(trendingRes.data || []);
         setNewArrivals(newRes.data || []);
         setCategories(catRes.data ? catRes.data.filter(c => c.isActive) : []);
+        setExploreProducts(exploreRes.data || []);
       } catch (err) {
         console.error('Failed to fetch homepage categories/products:', err);
       }
@@ -454,6 +440,49 @@ const Home = () => {
         </section>
       )}
 
+      {/* ================= EXPLORE MORE PRODUCTS ================= */}
+      {exploreProducts.length > 0 && (
+        <section className="py-10 md:py-16 bg-slate-50/50 border-t border-slate-100">
+          <div className="container mx-auto px-4">
+            {/* Section Title */}
+            <div className="text-center mb-12">
+              <span className="text-[11px] font-extrabold text-pink-500 uppercase tracking-widest block mb-2">
+                Curated For You
+              </span>
+              <h2 className="text-3xl md:text-4xl font-serif font-black text-slate-800 tracking-tight">
+                Explore More Products
+              </h2>
+              <div className="w-12 h-1 bg-gradient-to-r from-pink-500 to-purple-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            {/* Responsive Product Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {(() => {
+                const existingIds = new Set([
+                  ...trending.map(p => p._id),
+                  ...newArrivals.map(p => p._id)
+                ]);
+                const filtered = exploreProducts.filter(p => !existingIds.has(p._id));
+                const displayProducts = filtered.length >= 8 ? filtered : exploreProducts;
+                return displayProducts.slice(0, 12).map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ));
+              })()}
+            </div>
+
+            {/* View All Button */}
+            <div className="flex justify-center mt-12">
+              <Link
+                to="/shop"
+                className="group px-8 py-3.5 bg-gradient-to-r from-pink-500 to-[#fc2779] text-white font-bold text-sm rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 tracking-wider uppercase"
+              >
+                <span>View All Products</span>
+                <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
     </div>
   );

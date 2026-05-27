@@ -7,7 +7,7 @@ const Product = require('../models/Product');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { category, search, tag, discount, isWholesale } = req.query;
+    const { category, search, tag, discount, isWholesale, skinType, skinConcern, finish, preferences } = req.query;
     let query = { isActive: true };
 
     // Default to excluding wholesale products unless specifically requested
@@ -32,6 +32,20 @@ router.get('/', async (req, res) => {
       // Filter products with discountPrice less than price
       query.discountPrice = { $exists: true, $ne: null };
       query.$expr = { $lt: ["$discountPrice", "$price"] };
+    }
+
+    // Cosmetic Filters
+    if (skinType) {
+      query.skinType = { $in: skinType.split(',') };
+    }
+    if (skinConcern) {
+      query.skinConcern = { $in: skinConcern.split(',') };
+    }
+    if (finish) {
+      query.finish = { $in: finish.split(',') };
+    }
+    if (preferences) {
+      query.preferences = { $in: preferences.split(',') };
     }
 
     if (search) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate, Sliders } from 'lucide-react';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ const AdminLayout = () => {
     { name: 'Add Wholesale', path: '/admin/add-wholesale-product', icon: Store },
     { name: 'Categories', path: '/admin/categories', icon: Layers },
     { name: 'Hero Section', path: '/admin/hero', icon: LayoutTemplate },
+    { name: 'Top Utility Bar', path: '/admin/utility-bar', icon: Sliders },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
     { name: 'Banners', path: '/admin/banners', icon: ImageIcon },
     { name: 'Promo Banners', path: '/admin/promo-banners', icon: LayoutTemplate },
@@ -45,7 +46,7 @@ const AdminLayout = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed md:static inset-y-0 left-0 w-72 bg-slate-900 text-white shadow-xl z-30 transition-transform duration-300 ease-in-out
+        fixed md:static inset-y-0 left-0 w-72 bg-slate-900 text-white shadow-xl z-30 transition-transform duration-300 ease-in-out flex flex-col h-screen
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 flex items-center justify-between border-b border-slate-800">

@@ -138,7 +138,7 @@ const Hero = ({ heroConfig }) => {
             </p>
             
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto mb-10">
+            <div className="hidden md:flex flex-row items-center gap-4 w-auto mb-10">
               {renderButton(heroConfig?.cta1, 'primary')}
               {renderButton(heroConfig?.cta2, 'secondary')}
             </div>

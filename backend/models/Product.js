@@ -32,6 +32,12 @@ const ProductSchema = new mongoose.Schema({
   numReviews: { type: Number, default: 0 },
   isCombo: { type: Boolean, default: false },
 
+  // Cosmetic Filters
+  skinType: [{ type: String }],
+  skinConcern: [{ type: String }],
+  finish: { type: String, default: '' },
+  preferences: [{ type: String }],
+
   createdAt: { type: Date, default: Date.now }
 });
 

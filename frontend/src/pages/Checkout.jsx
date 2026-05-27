@@ -8,16 +8,6 @@ import api from '../services/api';
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const PINCODE_REGEX = /^[1-9][0-9]{5}$/;
 
-const loadScript = (src) => {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
 const Checkout = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const { user, updateUser } = useContext(AuthContext);
@@ -53,8 +43,6 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    loadScript('https://checkout.razorpay.com/v1/checkout.js');
-    
     const fetchLatestUser = async () => {
       try {
         const res = await api.get('/auth/me');
@@ -214,15 +202,6 @@ const Checkout = () => {
           contact: selectedAddress.phone.replace(/\D/g, ''),
         },
         theme: { color: '#db2777' },
-        config: {
-          display: {
-            blocks: {
-              upi: { name: 'Pay via UPI / QR Code', instruments: [{ method: 'upi' }] }
-            },
-            sequence: ['block.upi'],
-            preferences: { show_default_blocks: true }
-          }
-        },
         handler: async function (response) {
           try {
             setLoading(true);
@@ -252,7 +231,7 @@ const Checkout = () => {
           } catch (verifyErr) {
             console.error(verifyErr);
             setPaymentFailed(true);
-            setError(verifyErr.response?.data?.message || 'Payment succeeded but verification failed.');
+            setError(verifyErr.response?.data?.message || verifyErr.message || 'Payment succeeded but verification failed.');
           } finally {
             setLoading(false);
           }
@@ -277,7 +256,7 @@ const Checkout = () => {
       console.error(err);
       setLoading(false);
       setPaymentFailed(true);
-      setError(err.response?.data?.message || 'Failed to start payment. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to start payment. Please try again.');
     }
   };
 
