@@ -13,7 +13,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'ddcosmetics',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif']
   }
 });
 
