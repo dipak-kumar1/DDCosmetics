@@ -10,7 +10,8 @@ import {
   ArrowUpRight, 
   CheckCircle2,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Activity
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -49,6 +50,7 @@ const AdminDashboard = () => {
     totalUsers: 0,
     pendingOrders: 0,
     totalRevenue: 0,
+    activeUsersCount: 1,
     recentOrders: [],
     topSellingProducts: [],
     dailyRevenue: [],
@@ -66,6 +68,10 @@ const AdminDashboard = () => {
       }
     };
     fetchStats();
+    
+    // Poll stats every 10 seconds to keep live active users count fresh
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const cards = [
@@ -104,6 +110,15 @@ const AdminDashboard = () => {
       bg: 'bg-pink-50',
       trend: 'New items added',
       path: '/admin/products'
+    },
+    { 
+      title: 'Active Users (Live)', 
+      value: stats.activeUsersCount || 1, 
+      icon: Activity,
+      color: 'text-indigo-650',
+      bg: 'bg-indigo-50',
+      trend: 'Browsing site right now',
+      path: null
     }
   ];
 
@@ -156,7 +171,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {cards.map((card, index) => {
           const Icon = card.icon;
           const isClickable = !!card.path;

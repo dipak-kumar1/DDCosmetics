@@ -226,6 +226,7 @@ router.get('/dashboard-stats', auth, adminAuth, async (req, res) => {
       totalUsers,
       pendingOrders,
       totalRevenue,
+      activeUsersCount: req.app.get('getActiveUsers') ? req.app.get('getActiveUsers')() : 1,
       recentOrders: recentOrders || [],
       topSellingProducts: finalTopProducts || [],
       dailyRevenue,

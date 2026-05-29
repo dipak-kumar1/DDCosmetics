@@ -50,6 +50,29 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Active Users Tracking Memory Map
+const activeUsers = new Map();
+
+// Middleware to track active users (only API requests, excluding admins)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') && !req.path.startsWith('/api/admin')) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    activeUsers.set(ip, Date.now());
+  }
+  next();
+});
+
+// Getter function for active users count
+app.set('getActiveUsers', () => {
+  const cutoff = Date.now() - 3 * 60 * 1000; // 3 minutes inactivity threshold
+  for (const [ip, time] of activeUsers.entries()) {
+    if (time < cutoff) {
+      activeUsers.delete(ip);
+    }
+  }
+  return activeUsers.size || 1; // Always show at least 1 (the current admin/visitor)
+});
+
 // Serve Static Files (Uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
