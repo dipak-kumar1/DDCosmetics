@@ -14,6 +14,9 @@ const TopUtilityBar = () => {
   const [items, setItems] = useState([]);
   const { isInstallable, installApp } = usePWA();
 
+  const apiBaseURL = api.defaults.baseURL || 'https://ddcosmetics.onrender.com/api';
+  const backendOrigin = apiBaseURL.endsWith('/api') ? apiBaseURL.slice(0, -4) : apiBaseURL;
+
   useEffect(() => {
     const fetchUtilityBarItems = async () => {
       try {
@@ -41,10 +44,12 @@ const TopUtilityBar = () => {
             // Hide install link if PWA is not installable on current browser/device
             if (isInstallLink && !isInstallable) return null;
 
-            const isExternal = item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'));
+            const isApkDownload = item.link && item.link.startsWith('/uploads/');
+            const isExternal = (item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'))) || isApkDownload;
+            const hrefUrl = isApkDownload ? `${backendOrigin}${item.link}` : item.link;
             const LinkComponent = isExternal ? 'a' : Link;
             const linkProps = isExternal
-              ? { href: item.link, target: '_blank', rel: 'noopener noreferrer' }
+              ? { href: hrefUrl, download: isApkDownload ? 'ddcosmetics.apk' : undefined, target: '_blank', rel: 'noopener noreferrer' }
               : isInstallLink
                 ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
                 : { to: item.link };
@@ -80,10 +85,12 @@ const TopUtilityBar = () => {
               // Hide install link if PWA is not installable on current browser/device
               if (isInstallLink && !isInstallable) return null;
 
-              const isExternal = item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'));
+              const isApkDownload = item.link && item.link.startsWith('/uploads/');
+              const isExternal = (item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'))) || isApkDownload;
+              const hrefUrl = isApkDownload ? `${backendOrigin}${item.link}` : item.link;
               const LinkComponent = isExternal ? 'a' : Link;
               const linkProps = isExternal
-                ? { href: item.link, target: '_blank', rel: 'noopener noreferrer' }
+                ? { href: hrefUrl, download: isApkDownload ? 'ddcosmetics.apk' : undefined, target: '_blank', rel: 'noopener noreferrer' }
                 : isInstallLink
                   ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
                   : { to: item.link };
@@ -92,7 +99,7 @@ const TopUtilityBar = () => {
                 <LinkComponent
                   key={item._id}
                   {...linkProps}
-                  className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-slate-600 hover:text-[#fc2779] transition-all duration-200 cursor-pointer group"
+                  className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-slate-650 hover:text-[#fc2779] transition-all duration-200 cursor-pointer group"
                 >
                   {item.icon && (
                     <DynamicIcon 
