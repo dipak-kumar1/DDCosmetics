@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate, Sliders } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate, Sliders, Settings } from 'lucide-react';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ const AdminLayout = () => {
     { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
     { name: 'Banners', path: '/admin/banners', icon: ImageIcon },
     { name: 'Promo Banners', path: '/admin/promo-banners', icon: LayoutTemplate },
+    { name: 'Branding Settings', path: '/admin/branding', icon: Settings },
     { name: 'Change Password', path: '/admin/change-password', icon: Key },
     { name: 'View Shop', path: '/', icon: Store },
   ];

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import api from '../services/api';
+import { usePWA } from '../context/PWAContext';
 
 const DynamicIcon = ({ name, className }) => {
   const IconComponent = Icons[name];
@@ -11,6 +12,7 @@ const DynamicIcon = ({ name, className }) => {
 
 const TopUtilityBar = () => {
   const [items, setItems] = useState([]);
+  const { isInstallable, installApp } = usePWA();
 
   useEffect(() => {
     const fetchUtilityBarItems = async () => {
@@ -34,11 +36,18 @@ const TopUtilityBar = () => {
         {/* Mobile View: Horizontal Scrollable Strip */}
         <div className="md:hidden flex items-center gap-6 overflow-x-auto w-full no-scrollbar pb-1 snap-x scroll-smooth">
           {items.map((item) => {
+            const isInstallLink = item.link === '#install-pwa' || item.link === 'install-pwa' || (item.link && item.link.endsWith('/install-pwa'));
+            
+            // Hide install link if PWA is not installable on current browser/device
+            if (isInstallLink && !isInstallable) return null;
+
             const isExternal = item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'));
             const LinkComponent = isExternal ? 'a' : Link;
             const linkProps = isExternal
               ? { href: item.link, target: '_blank', rel: 'noopener noreferrer' }
-              : { to: item.link };
+              : isInstallLink
+                ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
+                : { to: item.link };
 
             return (
               <LinkComponent
@@ -66,11 +75,18 @@ const TopUtilityBar = () => {
 
           <div className="flex items-center gap-8">
             {items.map((item) => {
+              const isInstallLink = item.link === '#install-pwa' || item.link === 'install-pwa' || (item.link && item.link.endsWith('/install-pwa'));
+              
+              // Hide install link if PWA is not installable on current browser/device
+              if (isInstallLink && !isInstallable) return null;
+
               const isExternal = item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'));
               const LinkComponent = isExternal ? 'a' : Link;
               const linkProps = isExternal
                 ? { href: item.link, target: '_blank', rel: 'noopener noreferrer' }
-                : { to: item.link };
+                : isInstallLink
+                  ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
+                  : { to: item.link };
 
               return (
                 <LinkComponent

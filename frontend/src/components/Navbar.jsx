@@ -4,7 +4,9 @@ import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, ChevronRight, Home, Package, MapPin } from 'lucide-react';
+import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown, ChevronRight, Home, Package, MapPin, Smartphone } from 'lucide-react';
+import { BrandingContext } from '../context/BrandingContext';
+import { usePWA } from '../context/PWAContext';
 
 const Navbar = () => {
   const [categories, setCategories] = useState([]);
@@ -17,6 +19,8 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
+  const { branding, getAbsoluteUrl } = useContext(BrandingContext);
+  const { isInstallable, installApp } = usePWA();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
@@ -415,8 +419,21 @@ const Navbar = () => {
               </button>
 
               {/* Brand Logo */}
-              <Link to="/" className="text-2xl lg:text-3xl font-bold tracking-tighter hover:opacity-80 transition-opacity">
-                <span className="text-indigo-600">DD</span><span className="bg-gradient-to-r from-pink-600 to-indigo-600 bg-clip-text text-transparent">Cosmetics</span>
+              <Link to="/" className="flex items-center gap-2 text-2xl lg:text-3xl font-bold tracking-tighter hover:opacity-80 transition-opacity">
+                {branding.logoUrl ? (
+                  <img 
+                    src={getAbsoluteUrl(branding.logoUrl)} 
+                    alt={branding.title || 'DDCosmetics'} 
+                    className="h-9 lg:h-12 w-auto object-contain rounded-md"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      const textEl = e.target.parentNode.querySelectorAll('.brand-text');
+                      textEl.forEach(el => el.style.display = 'inline');
+                    }}
+                  />
+                ) : null}
+                <span className="brand-text text-indigo-650 font-bold" style={{ display: branding.logoUrl ? 'none' : 'inline' }}>DD</span>
+                <span className="brand-text bg-gradient-to-r from-pink-600 to-indigo-600 bg-clip-text text-transparent font-bold" style={{ display: branding.logoUrl ? 'none' : 'inline' }}>Cosmetics</span>
               </Link>
             </div>
 
@@ -670,6 +687,18 @@ const Navbar = () => {
               <Package className="w-4.5 h-4.5 text-slate-400" />
               <span>Wholesale Store</span>
             </Link>
+            {isInstallable && (
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  installApp();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 transition-all rounded-xl text-left cursor-pointer"
+              >
+                <Smartphone className="w-4.5 h-4.5 text-indigo-500" />
+                <span>Download App</span>
+              </button>
+            )}
           </div>
 
           {/* Section 2: Categories (Accordion) */}

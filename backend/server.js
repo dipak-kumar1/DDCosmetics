@@ -67,6 +67,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/utility-bar', require('./routes/utilityBar'));
+app.use('/api/branding', require('./routes/branding'));
 
 // Health Check / Ping
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date() }));
