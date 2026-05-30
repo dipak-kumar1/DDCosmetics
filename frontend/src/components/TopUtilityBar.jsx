@@ -41,9 +41,6 @@ const TopUtilityBar = () => {
           {items.map((item) => {
             const isInstallLink = item.link === '#install-pwa' || item.link === 'install-pwa' || (item.link && item.link.endsWith('/install-pwa'));
             
-            // Hide install link if PWA is not installable on current browser/device
-            if (isInstallLink && !isInstallable) return null;
-
             const isApkDownload = item.link && item.link.startsWith('/uploads/');
             const isExternal = (item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'))) || isApkDownload;
             const hrefUrl = isApkDownload ? `${backendOrigin}${item.link}` : item.link;
@@ -51,7 +48,14 @@ const TopUtilityBar = () => {
             const linkProps = isExternal
               ? { href: hrefUrl, download: isApkDownload ? 'ddcosmetics.apk' : undefined, target: '_blank', rel: 'noopener noreferrer' }
               : isInstallLink
-                ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
+                ? { to: '#', onClick: (e) => { 
+                    e.preventDefault(); 
+                    if (isInstallable) {
+                      installApp();
+                    } else {
+                      alert('App is already installed or your browser does not support installation right now. (Use Chrome on Android)');
+                    }
+                  } }
                 : { to: item.link };
 
             return (
@@ -82,9 +86,6 @@ const TopUtilityBar = () => {
             {items.map((item) => {
               const isInstallLink = item.link === '#install-pwa' || item.link === 'install-pwa' || (item.link && item.link.endsWith('/install-pwa'));
               
-              // Hide install link if PWA is not installable on current browser/device
-              if (isInstallLink && !isInstallable) return null;
-
               const isApkDownload = item.link && item.link.startsWith('/uploads/');
               const isExternal = (item.link && (item.link.startsWith('http://') || item.link.startsWith('https://'))) || isApkDownload;
               const hrefUrl = isApkDownload ? `${backendOrigin}${item.link}` : item.link;
@@ -92,7 +93,14 @@ const TopUtilityBar = () => {
               const linkProps = isExternal
                 ? { href: hrefUrl, download: isApkDownload ? 'ddcosmetics.apk' : undefined, target: '_blank', rel: 'noopener noreferrer' }
                 : isInstallLink
-                  ? { to: '#', onClick: (e) => { e.preventDefault(); installApp(); } }
+                  ? { to: '#', onClick: (e) => { 
+                      e.preventDefault(); 
+                      if (isInstallable) {
+                        installApp();
+                      } else {
+                        alert('App is already installed or your browser does not support installation right now. (Use Chrome on Android)');
+                      }
+                    } }
                   : { to: item.link };
 
               return (
