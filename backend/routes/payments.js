@@ -187,17 +187,19 @@ router.post('/verify-payment', auth, async (req, res) => {
       console.error('Failed to log purchase activity on payment confirmation:', activityErr.message);
     }
 
-    // Send Confirmation Email asynchronously
-    User.findById(req.user.id)
-      .then(user => {
-        if (user && user.email) {
-          Order.findById(order._id).populate('items.product', 'name images')
-            .then(populatedOrder => {
-              sendOrderConfirmationEmail(populatedOrder, user.email);
-            });
+    // Send Confirmation Email (Awaited to ensure completion on host environment)
+    try {
+      const user = await User.findById(req.user.id);
+      if (user && user.email) {
+        const populatedOrder = await Order.findById(order._id).populate('items.product', 'name images');
+        if (populatedOrder) {
+          await sendOrderConfirmationEmail(populatedOrder, user.email);
         }
-      })
-      .catch(err => console.error('Failed to trigger email:', err));
+      }
+    } catch (err) {
+      console.error('Failed to send order confirmation email:', err);
+    }
+
 
     res.json({
       success: true,

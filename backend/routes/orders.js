@@ -5,6 +5,9 @@ const adminAuth = require('../middleware/adminAuth');
 const Product = require('../models/Product');
 const UserActivity = require('../models/UserActivity');
 const Order = require('../models/Order');
+const User = require('../models/User');
+const { sendOrderConfirmationEmail } = require('../utils/emailService');
+
 
 // @route   POST /api/orders
 // @desc    Create a new order (Checkout)
@@ -59,6 +62,20 @@ router.post('/', auth, async (req, res) => {
     });
 
     const order = await newOrder.save();
+
+    // Send Confirmation Email (Awaited to ensure completion on host environment)
+    try {
+      const user = await User.findById(req.user.id);
+      if (user && user.email) {
+        const populatedOrder = await Order.findById(order._id).populate('items.product', 'name images');
+        if (populatedOrder) {
+          await sendOrderConfirmationEmail(populatedOrder, user.email);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to send order confirmation email:', err);
+    }
+
 
     // Track purchase activity for recommendations
     try {
