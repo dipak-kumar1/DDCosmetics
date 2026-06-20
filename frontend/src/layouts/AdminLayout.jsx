@@ -25,7 +25,15 @@ const AdminLayout = () => {
     if (isInstallable) {
       installApp();
     } else {
-      alert('PWA Installation is not ready yet. Please ensure:\n1. You are using Google Chrome or Microsoft Edge.\n2. The app is not already installed.\n3. The page has fully loaded.');
+      // Check if user is on iOS device (iPhone/iPad)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (isIOS) {
+        alert('iPhone/iPad (iOS) detect hua hai. Admin App install karne ke liye:\n\n1. Safari browser mein website open karein.\n2. Niche bane Share button (डिब्बा और ऊपर तीर) par click karein.\n3. Scroll karke "Add to Home Screen" select karein.');
+      } else {
+        alert('PWA Installation ready nahi hai. Kripya:\n1. Ensure karein ki aap Google Chrome (Android/Windows) ya Safari (iOS) use kar rahe hain.\n2. Page ko reload karein aur Service Worker load hone ke liye 5-10 seconds wait karein.\n3. Agar app pehle se installed hai to check karein.');
+      }
     }
   };
 
