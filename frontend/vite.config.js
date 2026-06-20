@@ -39,12 +39,12 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/uploads/default-logo.png',
+            src: '/default-logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/uploads/default-logo.png',
+            src: '/default-logo.png',
             sizes: '512x512',
             type: 'image/png'
           }
