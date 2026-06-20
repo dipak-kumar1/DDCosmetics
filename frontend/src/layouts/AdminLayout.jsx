@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate, Sliders, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, PlusCircle, Layers, ShoppingCart, Key, LogOut, Menu, User, Image as ImageIcon, Store, LayoutTemplate, Sliders, Settings, Download } from 'lucide-react';
+import { usePWA } from '../context/PWAContext';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('dd_admin_user') || '{}');
+  const { isInstallable, isInstalled, installApp } = usePWA();
 
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
@@ -17,6 +19,14 @@ const AdminLayout = () => {
     localStorage.removeItem('dd_admin_token');
     localStorage.removeItem('dd_admin_user');
     navigate('/admin/login');
+  };
+
+  const handleInstallClick = () => {
+    if (isInstallable) {
+      installApp();
+    } else {
+      alert('PWA Installation is not ready yet. Please ensure:\n1. You are using Google Chrome or Microsoft Edge.\n2. The app is not already installed.\n3. The page has fully loaded.');
+    }
   };
 
   const menuItems = [
@@ -34,6 +44,17 @@ const AdminLayout = () => {
     { name: 'Change Password', path: '/admin/change-password', icon: Key },
     { name: 'View Shop', path: '/', icon: Store },
   ];
+
+  if (!isInstalled) {
+    // Add "Install Admin App" right before "View Shop"
+    menuItems.splice(menuItems.length - 1, 0, {
+      name: 'Install Admin App',
+      icon: Download,
+      onClick: handleInstallClick
+    });
+  }
+
+
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
@@ -69,6 +90,21 @@ const AdminLayout = () => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+            if (item.onClick) {
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    setIsSidebarOpen(false);
+                    item.onClick();
+                  }}
+                  className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white group"
+                >
+                  <Icon className="w-5 h-5 text-slate-500 group-hover:text-white" />
+                  <span className="font-medium">{item.name}</span>
+                </button>
+              );
+            }
             return (
               <Link
                 key={item.path}

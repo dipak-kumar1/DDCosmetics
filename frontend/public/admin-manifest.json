@@ -1,0 +1,23 @@
+{
+  "name": "DD Admin Dashboard",
+  "short_name": "DD Admin",
+  "description": "DDCosmetics Admin Dashboard",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "start_url": "/admin/dashboard",
+  "scope": "/admin/",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/uploads/default-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/uploads/default-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
