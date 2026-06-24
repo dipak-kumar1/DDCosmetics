@@ -92,28 +92,6 @@ DDCosmetics/
 └── README.md
 ```
 
----
-
-# 📸 Screenshots
-
-## Home Page
-
-(Add Screenshot)
-
-## Product Details Page
-
-(Add Screenshot)
-
-## Cart Page
-
-(Add Screenshot)
-
-## Admin Dashboard
-
-(Add Screenshot)
-
----
-
 # ⚙️ Installation
 
 ## Clone Repository
